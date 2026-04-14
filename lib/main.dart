@@ -36,7 +36,7 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<String?>(
-      future: AuthStorage().getToken(),
+      future: _checkTokenAndNavigate(),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Scaffold(
@@ -44,14 +44,36 @@ class AuthGate extends StatelessWidget {
           );
         }
 
+        // If token exists and is valid, go to home
         if (snapshot.hasData &&
             snapshot.data != null &&
             snapshot.data!.isNotEmpty) {
           return const HomeScreen();
         }
 
+        // No token or invalid - go to login
         return const LoginScreen();
       },
     );
+  }
+
+  /// Checks token and returns it if valid, null otherwise
+  Future<String?> _checkTokenAndNavigate() async {
+    final storage = AuthStorage();
+    final token = await storage.getToken();
+
+    if (token == null || token.isEmpty) {
+      return null;
+    }
+
+    // Optional: Validate token format here
+    // If token is expired/invalid, logout and return null
+    final isValid = await storage.isTokenValid();
+    if (!isValid) {
+      await storage.logout();
+      return null;
+    }
+
+    return token;
   }
 }

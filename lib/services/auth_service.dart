@@ -12,18 +12,38 @@ class AuthResult {
   final String? refreshToken;
   final Map<String, dynamic>? user;
 
+  // New fields from API response
+  final int? id;
+  final String? nome;
+  final String? email;
+  final String? tipo;
+  final double? latitude;
+  final double? longitude;
+
   AuthResult({
     required this.success,
     required this.message,
     this.token,
     this.refreshToken,
     this.user,
+    this.id,
+    this.nome,
+    this.email,
+    this.tipo,
+    this.latitude,
+    this.longitude,
   });
 
   factory AuthResult.success({
     required String token,
     String? refreshToken,
     Map<String, dynamic>? user,
+    int? id,
+    String? nome,
+    String? email,
+    String? tipo,
+    double? latitude,
+    double? longitude,
   }) {
     return AuthResult(
       success: true,
@@ -31,6 +51,12 @@ class AuthResult {
       token: token,
       refreshToken: refreshToken,
       user: user,
+      id: id,
+      nome: nome,
+      email: email,
+      tipo: tipo,
+      latitude: latitude,
+      longitude: longitude,
     );
   }
 
@@ -107,10 +133,24 @@ class AuthService {
         );
       }
 
+      // Extract new API fields
+      final id = data['id'] as int?;
+      final nome = data['nome'] as String?;
+      final email = data['email'] as String?;
+      final tipo = data['tipo'] as String?;
+      final latitude = (data['latitude'] as num?)?.toDouble();
+      final longitude = (data['longitude'] as num?)?.toDouble();
+
       return AuthResult.success(
         token: token,
         refreshToken: refreshToken,
         user: data,
+        id: id,
+        nome: nome,
+        email: email,
+        tipo: tipo,
+        latitude: latitude,
+        longitude: longitude,
       );
     }
 
