@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/auth_storage.dart';
-import 'routes/app_routes.dart';
+import 'core/routes/app_routes.dart';
 
 void main() {
   runApp(const MotoboyApp());

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/auth_storage.dart';
 import '../services/api_service.dart';
 import '../utils/http_client.dart';
-import 'package:projeto_perguntas/routes/app_routes.dart';
+import '../core/entities/vagas_entity.dart';
+import 'package:projeto_perguntas/core/routes/app_routes.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

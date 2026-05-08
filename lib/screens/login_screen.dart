@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:projeto_perguntas/services/auth_service.dart';
 import 'package:projeto_perguntas/services/auth_storage.dart';
-import 'package:projeto_perguntas/routes/app_routes.dart';
+import 'package:projeto_perguntas/core/routes/app_routes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
