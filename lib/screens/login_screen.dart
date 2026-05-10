@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:projeto_perguntas/services/auth_service.dart';
 import 'package:projeto_perguntas/services/auth_storage.dart';
 import 'package:projeto_perguntas/core/routes/app_routes.dart';
@@ -15,7 +16,38 @@ class _LoginScreenState extends State<LoginScreen> {
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _rememberMe = false;
   String _errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final email = prefs.getString('saved_email');
+    final password = prefs.getString('saved_password');
+    if (email != null) {
+      setState(() {
+        _identifierController.text = email;
+        _passwordController.text = password ?? '';
+        _rememberMe = true;
+      });
+    }
+  }
+
+  Future<void> _saveCredentials(String email, String password) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_rememberMe) {
+      await prefs.setString('saved_email', email);
+      await prefs.setString('saved_password', password);
+    } else {
+      await prefs.remove('saved_email');
+      await prefs.remove('saved_password');
+    }
+  }
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
@@ -39,6 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (result.success && result.token != null) {
       await AuthStorage().saveToken(result.token!);
+      await _saveCredentials(email, password);
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -67,11 +100,11 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         children: [
           Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color.fromARGB(255, 27, 50, 179),
-                  const Color.fromARGB(255, 38, 78, 102),
+                  Color.fromARGB(255, 27, 50, 179),
+                  Color.fromARGB(255, 38, 78, 102),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -160,23 +193,34 @@ class _LoginScreenState extends State<LoginScreen> {
                                     return null;
                                   },
                                 ),
-                                const SizedBox(height: 12),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: TextButton(
-                                    onPressed: () {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Link de recuperação ainda não implementado.',
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Checkbox(
+                                      value: _rememberMe,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _rememberMe = value ?? false;
+                                        });
+                                      },
+                                    ),
+                                    const Text('Lembrar senha'),
+                                    const Spacer(),
+                                    TextButton(
+                                      onPressed: () {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Link de recuperação ainda não implementado.',
+                                            ),
                                           ),
-                                        ),
-                                      );
-                                    },
-                                    child: const Text('Esqueci minha senha'),
-                                  ),
+                                        );
+                                      },
+                                      child: const Text('Esqueci minha senha'),
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(height: 8),
                                 SizedBox(
@@ -249,8 +293,8 @@ class _LoginHeader extends StatelessWidget {
     return Column(
       children: [
         Container(
-          decoration: BoxDecoration(
-            color: const Color.fromARGB(255, 18, 17, 41),
+          decoration: const BoxDecoration(
+            color: Color.fromARGB(255, 18, 17, 41),
             shape: BoxShape.circle,
           ),
           padding: const EdgeInsets.all(18),

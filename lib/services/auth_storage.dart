@@ -1,18 +1,25 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthStorage {
-  AuthStorage();
+  AuthStorage({SharedPreferences? preferences}) : _preferences = preferences;
+
+  SharedPreferences? _preferences;
 
   static const String _tokenKey = 'auth_token';
 
+  Future<SharedPreferences> _getPrefs() async {
+    _preferences ??= await SharedPreferences.getInstance();
+    return _preferences!;
+  }
+
   Future<void> saveToken(String token) async {
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_tokenKey, token);
+    final prefs = await _getPrefs();
+    await prefs.setString(_tokenKey, token);
   }
 
   Future<String?> getToken() async {
-    final preferences = await SharedPreferences.getInstance();
-    final token = preferences.getString(_tokenKey);
+    final prefs = await _getPrefs();
+    final token = prefs.getString(_tokenKey);
     return token != null && token.isNotEmpty ? token : null;
   }
 
@@ -33,7 +40,7 @@ class AuthStorage {
   }
 
   Future<void> logout() async {
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.remove(_tokenKey);
+    final prefs = await _getPrefs();
+    await prefs.remove(_tokenKey);
   }
 }

@@ -13,54 +13,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final ApiService _apiService = ApiService();
-  List<Vaga> _vagas = [];
-  bool _isLoadingVagas = true;
-  String? _errorMessage;
+  int _currentIndex = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadVagas();
-  }
-
-  Future<void> _loadVagas() async {
-    setState(() {
-      _isLoadingVagas = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final vagas = await _apiService.getVagas();
-      if (!mounted) return;
-
-      setState(() {
-        _vagas = vagas;
-        _isLoadingVagas = false;
-      });
-    } on TokenException catch (e) {
-      if (!mounted) return;
-
-      // Token expired or invalid - redirect to login
-      await AuthStorage().logout();
-      if (!mounted) return;
-
-      Navigator.of(context).pushReplacementNamed(AppRoutes.login);
-
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.message)));
-      }
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        _errorMessage = 'Erro ao carregar vagas: $e';
-        _isLoadingVagas = false;
-      });
-    }
-  }
+  final List<Widget> _pages = const [
+    _HomeTab(),
+    _VagasTab(),
+    _AgendamentosTab(),
+    _SettingsTab(),
+  ];
 
   Future<void> _handleLogout(BuildContext context) async {
     await AuthStorage().logout();
@@ -73,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home do motoboy'),
+        title: const Text('Trans Delivery'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -82,139 +42,204 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Bem-vindo ao Trans Delivery',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Aqui você encontra suas entregas e as vagas disponíveis.',
-            ),
-            const SizedBox(height: 24),
-            Expanded(
-              child: ListView(
-                children: [
-                  const _HomeCard(
-                    title: 'Meus agendamentos',
-                    description:
-                        'Acompanhe seus agendamentos ativos e futuros.',
-                    icon: Icons.delivery_dining_sharp,
-                  ),
-                  const SizedBox(height: 14),
-                  _VagasCard(
-                    vagas: _vagas,
-                    isLoading: _isLoadingVagas,
-                    errorMessage: _errorMessage,
-                    onRefresh: _loadVagas,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+      body: IndexedStack(index: _currentIndex, children: _pages),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (i) => setState(() => _currentIndex = i),
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.location_on_outlined),
+            activeIcon: Icon(Icons.location_on),
+            label: 'Vagas',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today_outlined),
+            activeIcon: Icon(Icons.calendar_today),
+            label: 'Agendamentos',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_outlined),
+            activeIcon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+        ],
       ),
     );
   }
 }
 
-class _VagasCard extends StatelessWidget {
-  final List<Vaga> vagas;
-  final bool isLoading;
-  final String? errorMessage;
-  final VoidCallback onRefresh;
+// ─── Home Tab ────────────────────────────────────────────────────────────────
 
-  const _VagasCard({
-    required this.vagas,
-    required this.isLoading,
-    this.errorMessage,
-    required this.onRefresh,
-  });
+class _HomeTab extends StatelessWidget {
+  const _HomeTab();
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.location_on,
-                      size: 32,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(width: 16),
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Vagas disponíveis',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(height: 6),
-                        Text(
-                          'Novas oportunidades de entregas próximas a você.',
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: onRefresh,
-                  tooltip: 'Atualizar',
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (isLoading)
-              const Center(child: CircularProgressIndicator())
-            else if (errorMessage != null)
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red.shade200),
-                ),
-                child: Text(
-                  errorMessage!,
-                  style: TextStyle(color: Colors.red.shade800),
-                ),
-              )
-            else if (vagas.isEmpty)
-              const Center(child: Text('Nenhuma vaga disponível no momento.'))
-            else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: vagas.length,
-                itemBuilder: (context, index) {
-                  final vaga = vagas[index];
-                  return _VagaItem(vaga: vaga);
-                },
-              ),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Bem-vindo ao Trans Delivery',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Aqui você encontra suas entregas e as vagas disponíveis.',
+          ),
+          const SizedBox(height: 24),
+          const _HomeCard(
+            title: 'Meus agendamentos',
+            description: 'Acompanhe seus agendamentos ativos e futuros.',
+            icon: Icons.delivery_dining_sharp,
+          ),
+        ],
       ),
     );
   }
 }
 
+// ─── Vagas Tab ────────────────────────────────────────────────────────────────
+
+class _VagasTab extends StatefulWidget {
+  const _VagasTab();
+
+  @override
+  State<_VagasTab> createState() => _VagasTabState();
+}
+
+class _VagasTabState extends State<_VagasTab> {
+  final ApiService _apiService = ApiService();
+  List<VagaEntity> _vagas = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVagas();
+  }
+
+  Future<void> _loadVagas() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final vagas = await _apiService.getVagas();
+      if (!mounted) return;
+      setState(() {
+        _vagas = vagas;
+        _isLoading = false;
+      });
+    } on TokenException catch (e) {
+      if (!mounted) return;
+      await AuthStorage().logout();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Erro ao carregar vagas: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Vagas disponíveis',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: _loadVagas,
+                tooltip: 'Atualizar',
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else if (_errorMessage != null)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.shade200),
+              ),
+              child: Text(
+                _errorMessage!,
+                style: TextStyle(color: Colors.red.shade800),
+              ),
+            )
+          else if (_vagas.isEmpty)
+            const Center(child: Text('Nenhuma vaga disponível no momento.'))
+          else
+            Expanded(
+              child: ListView.builder(
+                itemCount: _vagas.length,
+                itemBuilder: (context, index) {
+                  final vaga = _vagas[index];
+                  return _VagaItem(vaga: vaga);
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Agendamentos Tab ─────────────────────────────────────────────────────────
+
+class _AgendamentosTab extends StatelessWidget {
+  const _AgendamentosTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: Text('Agendamentos — em breve'));
+  }
+}
+
+// ─── Settings Tab ─────────────────────────────────────────────────────────────
+
+class _SettingsTab extends StatelessWidget {
+  const _SettingsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: Text('Settings — em breve'));
+  }
+}
+
+// ─── Componentes compartilhados ───────────────────────────────────────────────
+
 class _VagaItem extends StatelessWidget {
-  final Vaga vaga;
+  final VagaEntity vaga;
 
   const _VagaItem({required this.vaga});
 
@@ -230,25 +255,10 @@ class _VagaItem extends StatelessWidget {
             color: Theme.of(context).colorScheme.onPrimaryContainer,
           ),
         ),
-        title: Text(vaga.titulo),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (vaga.localizacao != null) Text(vaga.localizacao!),
-            if (vaga.valor != null)
-              Text(
-                'R\$ ${vaga.valor!.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-          ],
-        ),
-        isThreeLine: true,
+        title: Text(vaga.descricao),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
-          // TODO: Navigate to vaga details
+          // TODO: Navegar para detalhes da vaga
         },
       ),
     );

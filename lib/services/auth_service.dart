@@ -10,15 +10,8 @@ class AuthResult {
   final String message;
   final String? token;
   final String? refreshToken;
-  final Map<String, dynamic>? user;
-
-  // New fields from API response
-  final int? id;
-  final String? nome;
-  final String? email;
-  final String? tipo;
-  final double? latitude;
-  final double? longitude;
+  final Map<String, dynamic>?
+  user; // ✅ campos individuais removidos — use user['id'], user['nome'], etc.
 
   AuthResult({
     required this.success,
@@ -26,24 +19,12 @@ class AuthResult {
     this.token,
     this.refreshToken,
     this.user,
-    this.id,
-    this.nome,
-    this.email,
-    this.tipo,
-    this.latitude,
-    this.longitude,
   });
 
   factory AuthResult.success({
     required String token,
     String? refreshToken,
     Map<String, dynamic>? user,
-    int? id,
-    String? nome,
-    String? email,
-    String? tipo,
-    double? latitude,
-    double? longitude,
   }) {
     return AuthResult(
       success: true,
@@ -51,12 +32,6 @@ class AuthResult {
       token: token,
       refreshToken: refreshToken,
       user: user,
-      id: id,
-      nome: nome,
-      email: email,
-      tipo: tipo,
-      latitude: latitude,
-      longitude: longitude,
     );
   }
 
@@ -66,12 +41,21 @@ class AuthResult {
 }
 
 class AuthService {
-  AuthService({String? baseUrl}) : _baseUrl = baseUrl ?? _defaultBaseUrl;
+  AuthService({
+    String? baseUrl,
+    http.Client? client, // ✅ injeção do client
+  }) : _baseUrl = baseUrl ?? _defaultBaseUrl,
+       _client = client ?? http.Client();
 
-  static const String _defaultBaseUrl = 'http://192.168.15.133:8080';
+  // ✅ baseUrl via variável de ambiente
+  static const String _defaultBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://192.168.15.133:8080',
+  );
   static const String _loginPath = '/auth/login';
 
   final String _baseUrl;
+  final http.Client _client;
 
   Uri get _loginUri => Uri.parse('$_baseUrl$_loginPath');
 
@@ -83,11 +67,13 @@ class AuthService {
     try {
       final body = jsonEncode({'email': email, 'password': password});
 
-      debugPrint('=== LOGIN REQUEST ===');
-      debugPrint('URL: $_loginUri');
-      debugPrint('BODY: $body');
+      if (kDebugMode) {
+        debugPrint('=== LOGIN REQUEST ===');
+        debugPrint('URL: $_loginUri');
+        debugPrint('BODY: $body');
+      }
 
-      final response = await http
+      final response = await _client
           .post(
             _loginUri,
             headers: {'Content-Type': 'application/json'},
@@ -107,9 +93,10 @@ class AuthService {
         'Resposta invalida do servidor. Tente novamente mais tarde.',
       );
     } catch (e) {
-      debugPrint('=== LOGIN ERROR ===');
-      debugPrint('Error: $e');
-
+      if (kDebugMode) {
+        debugPrint('=== LOGIN ERROR ===');
+        debugPrint('Error: $e');
+      }
       return AuthResult.failure('Erro inesperado. Tente novamente.');
     }
   }
@@ -118,9 +105,11 @@ class AuthService {
     final statusCode = response.statusCode;
     final body = response.body;
 
-    debugPrint('=== LOGIN RESPONSE ===');
-    debugPrint('STATUS CODE: $statusCode');
-    debugPrint('BODY: $body');
+    if (kDebugMode) {
+      debugPrint('=== LOGIN RESPONSE ===');
+      debugPrint('STATUS CODE: $statusCode');
+      debugPrint('BODY: $body');
+    }
 
     if (statusCode == 200 || statusCode == 201) {
       final data = jsonDecode(body) as Map<String, dynamic>;
@@ -133,24 +122,11 @@ class AuthService {
         );
       }
 
-      // Extract new API fields
-      final id = data['id'] as int?;
-      final nome = data['nome'] as String?;
-      final email = data['email'] as String?;
-      final tipo = data['tipo'] as String?;
-      final latitude = (data['latitude'] as num?)?.toDouble();
-      final longitude = (data['longitude'] as num?)?.toDouble();
-
       return AuthResult.success(
         token: token,
         refreshToken: refreshToken,
-        user: data,
-        id: id,
-        nome: nome,
-        email: email,
-        tipo: tipo,
-        latitude: latitude,
-        longitude: longitude,
+        user:
+            data, // ✅ Map completo — acesse via user['id'], user['nome'], etc.
       );
     }
 
