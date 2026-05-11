@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bem-vindo! Autenticação realizada.')),
+        const SnackBar(content: Text('Bem-vindo! Autenticacao realizada.')),
       );
 
       Navigator.of(context).pushReplacementNamed(AppRoutes.home);
@@ -213,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ).showSnackBar(
                                           const SnackBar(
                                             content: Text(
-                                              'Link de recuperação ainda não implementado.',
+                                              'Link de recuperacao ainda nao implementado.',
                                             ),
                                           ),
                                         );
@@ -251,19 +251,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Text('Não tem conta?'),
+                                    const Text('Nao tem conta?'),
                                     TextButton(
-                                      onPressed: () {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Fluxo de cadastro ainda não disponível.',
-                                            ),
-                                          ),
-                                        );
-                                      },
+                                      onPressed: () =>
+                                          Navigator.of(context).pushNamed(
+                                            AppRoutes.registerType,
+                                          ), // ✅ navega para seleção de tipo
                                       child: const Text('Criar conta'),
                                     ),
                                   ],

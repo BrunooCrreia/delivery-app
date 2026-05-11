@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/register_type_screen.dart';
+import 'screens/register_entregador_screen.dart';
+import 'screens/register_restaurante_screen.dart';
 import 'services/auth_storage.dart';
 import 'core/routes/app_routes.dart';
 
@@ -25,6 +28,11 @@ class MotoboyApp extends StatelessWidget {
         '/': (context) => const AuthGate(),
         AppRoutes.login: (context) => const LoginScreen(),
         AppRoutes.home: (context) => const HomeScreen(),
+        AppRoutes.registerType: (context) => const RegisterTypeScreen(),
+        AppRoutes.registerMotoboy: (context) =>
+            const RegisterEntregadorScreen(),
+        AppRoutes.registerRestaurante: (context) =>
+            const RegisterRestauranteScreen(),
       },
     );
   }
