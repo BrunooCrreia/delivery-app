@@ -27,7 +27,7 @@ class AuthResult {
   }) {
     return AuthResult(
       success: true,
-      message: 'Login realizado com sucesso.',
+      message: 'Operacao realizada com sucesso.',
       token: token,
       refreshToken: refreshToken,
       user: user,
@@ -40,14 +40,21 @@ class AuthResult {
 }
 
 class AuthService {
-  AuthService({String? baseUrl}) : _baseUrl = baseUrl ?? _defaultBaseUrl;
+  AuthService({String? baseUrl, http.Client? client})
+    : _baseUrl = baseUrl ?? _defaultBaseUrl,
+      _client = client ?? http.Client();
 
-  static const String _defaultBaseUrl = 'http://192.168.15.133:8080';
+  static const String _defaultBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://192.168.15.133:8080',
+  );
   static const String _loginPath = '/auth/login';
+  static const String _registerPath = '/auth/register';
 
   final String _baseUrl;
+  final http.Client _client;
 
-  Uri get _loginUri => Uri.parse('$_baseUrl$_loginPath');
+  // ── Login ────────────────────────────────────────────────────────────────
 
   Future<AuthResult> login(String email, String password) async {
     if (email.isEmpty || password.isEmpty) {
@@ -57,13 +64,15 @@ class AuthService {
     try {
       final body = jsonEncode({'email': email, 'password': password});
 
-      debugPrint('=== LOGIN REQUEST ===');
-      debugPrint('URL: $_loginUri');
-      debugPrint('BODY: $body');
+      if (kDebugMode) {
+        debugPrint('=== LOGIN REQUEST ===');
+        debugPrint('URL: $_baseUrl$_loginPath');
+        debugPrint('BODY: $body');
+      }
 
-      final response = await http
+      final response = await _client
           .post(
-            _loginUri,
+            Uri.parse('$_baseUrl$_loginPath'),
             headers: {'Content-Type': 'application/json'},
             body: body,
           )
@@ -81,20 +90,72 @@ class AuthService {
         'Resposta invalida do servidor. Tente novamente mais tarde.',
       );
     } catch (e) {
-      debugPrint('=== LOGIN ERROR ===');
-      debugPrint('Error: $e');
-
+      if (kDebugMode) {
+        debugPrint('=== LOGIN ERROR ===');
+        debugPrint('Error: $e');
+      }
       return AuthResult.failure('Erro inesperado. Tente novamente.');
     }
   }
+
+  // ── Register ─────────────────────────────────────────────────────────────
+
+  /// Registra um novo usuario (MOTOBOY ou RESTAURANTE).
+  /// O [data] deve conter todos os campos exigidos pela API para o tipo informado.
+  Future<AuthResult> register(Map<String, dynamic> data) async {
+    try {
+      final body = jsonEncode(data);
+
+      if (kDebugMode) {
+        debugPrint('=== REGISTER REQUEST ===');
+        debugPrint('URL: $_baseUrl$_registerPath');
+        debugPrint('BODY: $body');
+      }
+
+      final response = await _client
+          .post(
+            Uri.parse('$_baseUrl$_registerPath'),
+            headers: {'Content-Type': 'application/json'},
+            body: body,
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (kDebugMode) {
+        debugPrint('=== REGISTER RESPONSE ===');
+        debugPrint('STATUS: ${response.statusCode}');
+        debugPrint('BODY: ${response.body}');
+      }
+
+      return _parseResponse(response);
+    } on SocketException {
+      return AuthResult.failure(
+        'Sem conexao com a internet. Verifique sua rede.',
+      );
+    } on TimeoutException {
+      return AuthResult.failure('Tempo de conexao esgotado. Tente novamente.');
+    } on FormatException {
+      return AuthResult.failure(
+        'Resposta invalida do servidor. Tente novamente mais tarde.',
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('=== REGISTER ERROR ===');
+        debugPrint('Error: $e');
+      }
+      return AuthResult.failure('Erro inesperado. Tente novamente.');
+    }
+  }
+
+  // ── Parse ─────────────────────────────────────────────────────────────────
 
   AuthResult _parseResponse(http.Response response) {
     final statusCode = response.statusCode;
     final body = response.body;
 
-    debugPrint('=== LOGIN RESPONSE ===');
-    debugPrint('STATUS CODE: $statusCode');
-    debugPrint('BODY: $body');
+    if (kDebugMode) {
+      debugPrint('STATUS CODE: $statusCode');
+      debugPrint('BODY: $body');
+    }
 
     if (statusCode == 200 || statusCode == 201) {
       final data = jsonDecode(body) as Map<String, dynamic>;
@@ -102,6 +163,14 @@ class AuthService {
       final refreshToken = data['refreshToken'] as String?;
 
       if (token == null || token.isEmpty) {
+        if (statusCode == 201) {
+          return AuthResult(
+            success: true,
+            message:
+                'Cadastro realizado com sucesso. Faca login para continuar.',
+            user: data,
+          );
+        }
         return AuthResult.failure(
           'Resposta do servidor nao contem token de autenticacao.',
         );
@@ -116,7 +185,7 @@ class AuthService {
 
     if (statusCode == 400) {
       return AuthResult.failure(
-        'Dados de login invalidos. Verifique e tente novamente.',
+        'Dados invalidos. Verifique as informacoes e tente novamente.',
       );
     }
 
@@ -126,6 +195,10 @@ class AuthService {
 
     if (statusCode == 403) {
       return AuthResult.failure('Acesso negado. Contate o administrador.');
+    }
+
+    if (statusCode == 409) {
+      return AuthResult.failure('E-mail ja cadastrado. Tente fazer login.');
     }
 
     if (statusCode >= 500) {
