@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:projeto_perguntas/services/auth_service.dart';
 import 'package:projeto_perguntas/services/auth_storage.dart';
 import 'package:projeto_perguntas/core/routes/app_routes.dart';
+import 'package:projeto_perguntas/screens/widgets/termos_entregador_texto.dart';
 
 class RegisterEntregadorScreen extends StatefulWidget {
   const RegisterEntregadorScreen({super.key});
@@ -12,31 +15,106 @@ class RegisterEntregadorScreen extends StatefulWidget {
 }
 
 class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
-  final _formKey = GlobalKey<FormState>();
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  // ── Máscaras ──────────────────────────────────────────────────────────────
+  final _cpfMask = MaskTextInputFormatter(
+    mask: '###.###.###-##',
+    filter: {'#': RegExp(r'[0-9]')},
+  );
+
+  final _dataMask = MaskTextInputFormatter(
+    mask: '##/##/####',
+    filter: {'#': RegExp(r'[0-9]')},
+  );
+
+  // ── Etapa 1: Dados pessoais ───────────────────────────────────────────────
+  final _formKey1 = GlobalKey<FormState>();
   final _nomeController = TextEditingController();
+  final _sobrenomeController = TextEditingController();
+  final _cpfController = TextEditingController();
+  final _dataNascimentoController = TextEditingController();
+
+  // ── Etapa 2: Acesso ───────────────────────────────────────────────────────
+  final _formKey2 = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+
+  // ── Etapa 3: Endereço + termos ────────────────────────────────────────────
+  final _formKey3 = GlobalKey<FormState>();
+  final _enderecoController = TextEditingController();
+  final _numeroController = TextEditingController();
+  final _bairroController = TextEditingController();
+  final _cidadeController = TextEditingController();
+  final _estadoController = TextEditingController();
+  final _cepController = TextEditingController();
   final _latitudeController = TextEditingController();
   final _longitudeController = TextEditingController();
+  bool _aceitouTermos = false;
 
   bool _isLoading = false;
   String _errorMessage = '';
 
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _nomeController.dispose();
+    _sobrenomeController.dispose();
+    _cpfController.dispose();
+    _dataNascimentoController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _enderecoController.dispose();
+    _numeroController.dispose();
+    _bairroController.dispose();
+    _cidadeController.dispose();
+    _estadoController.dispose();
+    _cepController.dispose();
+    _latitudeController.dispose();
+    _longitudeController.dispose();
+    super.dispose();
+  }
+
+  void _nextPage(GlobalKey<FormState> formKey) {
+    if (!formKey.currentState!.validate()) return;
+    setState(() => _errorMessage = '');
+    _pageController.nextPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _prevPage() {
+    _pageController.previousPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
   Future<void> _handleRegister() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey3.currentState!.validate()) return;
+    if (!_aceitouTermos) {
+      setState(() => _errorMessage = 'Voce precisa aceitar os termos de uso.');
+      return;
+    }
 
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
 
+    final nomeCompleto =
+        '${_nomeController.text.trim()} ${_sobrenomeController.text.trim()}';
+
     final authService = AuthService();
     final result = await authService.register({
-      'nome': _nomeController.text.trim(),
+      'nome': nomeCompleto,
       'email': _emailController.text.trim(),
       'password': _passwordController.text,
-      'tipo': 'ENTREGADOR',
+      'tipo': 'MOTOBOY',
       'latitude': double.tryParse(_latitudeController.text.trim()) ?? 0.0,
       'longitude': double.tryParse(_longitudeController.text.trim()) ?? 0.0,
     });
@@ -48,37 +126,60 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
       _errorMessage = result.success ? '' : result.message;
     });
 
-    if (result.success) {
-      if (result.token != null && result.token!.isNotEmpty) {
-        await AuthStorage().saveToken(result.token!);
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Entregador cadastrado com sucesso!')),
-        );
-
-        Navigator.of(context).pushReplacementNamed(AppRoutes.home);
-        return;
-      }
+    if (result.success && result.token != null) {
+      await AuthStorage().saveToken(result.token!);
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cadastro concluido. Faca login para continuar.'),
-        ),
+        const SnackBar(content: Text('Entregador cadastrado com sucesso!')),
       );
-      Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+
+      Navigator.of(context).pushReplacementNamed(AppRoutes.home);
     }
   }
 
-  @override
-  void dispose() {
-    _nomeController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    _latitudeController.dispose();
-    _longitudeController.dispose();
-    super.dispose();
+  void _abrirTermos() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (_, scrollController) => Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                'Termo de Condições de Uso',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const Divider(),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: scrollController,
+                padding: const EdgeInsets.all(20),
+                child: const TermosEntregadorTexto(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildField({
@@ -88,6 +189,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
     TextInputType keyboardType = TextInputType.text,
     TextInputAction textInputAction = TextInputAction.next,
     bool obscureText = false,
+    List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
   }) {
     final labelStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -99,6 +201,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       obscureText: obscureText,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: labelStyle,
@@ -119,148 +222,409 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Cadastro de Entregador')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (_errorMessage.isNotEmpty) ...[
-                _RegisterError(message: _errorMessage),
-                const SizedBox(height: 16),
-              ],
-
-              // ── Dados da conta ──────────────────────────────────────────
-              _SectionTitle(title: 'Dados da conta'),
-              const SizedBox(height: 12),
-              _buildField(
-                controller: _nomeController,
-                label: 'Nome',
-                icon: Icons.person_outline,
-              ),
-              const SizedBox(height: 16),
-              _buildField(
-                controller: _emailController,
-                label: 'E-mail',
-                icon: Icons.email_outlined,
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Informe o e-mail';
-                  }
-                  if (!value.contains('@')) return 'E-mail invalido';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              _buildField(
-                controller: _passwordController,
-                label: 'Senha',
-                icon: Icons.lock_outline,
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Informe a senha';
-                  if (value.length < 6) return 'Minimo 6 caracteres';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              _buildField(
-                controller: _confirmPasswordController,
-                label: 'Confirmar senha',
-                icon: Icons.lock_outline,
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Confirme a senha';
-                  }
-                  if (value != _passwordController.text) {
-                    return 'As senhas nao conferem';
-                  }
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 28),
-
-              // ── Localizacao ─────────────────────────────────────────────
-              _SectionTitle(title: 'Localizacao'),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildField(
-                      controller: _latitudeController,
-                      label: 'Latitude',
-                      icon: Icons.my_location_outlined,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Obrigatorio';
-                        }
-                        if (double.tryParse(value.trim()) == null) {
-                          return 'Invalido';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildField(
-                      controller: _longitudeController,
-                      label: 'Longitude',
-                      icon: Icons.my_location_outlined,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
-                      ),
-                      textInputAction: TextInputAction.done,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Obrigatorio';
-                        }
-                        if (double.tryParse(value.trim()) == null) {
-                          return 'Invalido';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleRegister,
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2.5,
-                          ),
-                        )
-                      : const Text('Criar conta'),
-                ),
-              ),
-            ],
-          ),
+      appBar: AppBar(
+        title: const Text('Cadastro de Entregador'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(4),
+          child: _ProgressBar(currentPage: _currentPage, totalPages: 3),
         ),
+      ),
+      body: PageView(
+        controller: _pageController,
+        physics: const NeverScrollableScrollPhysics(),
+        onPageChanged: (page) => setState(() => _currentPage = page),
+        children: [_buildEtapa1(), _buildEtapa2(), _buildEtapa3()],
+      ),
+    );
+  }
+
+  // ── Etapa 1: Dados pessoais ───────────────────────────────────────────────
+
+  Widget _buildEtapa1() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Form(
+        key: _formKey1,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const _SectionTitle(title: 'Dados pessoais'),
+            const SizedBox(height: 4),
+            const Text('Etapa 1 de 3'),
+            const SizedBox(height: 20),
+            _buildField(
+              controller: _nomeController,
+              label: 'Nome',
+              icon: Icons.person_outline,
+            ),
+            const SizedBox(height: 16),
+            _buildField(
+              controller: _sobrenomeController,
+              label: 'Sobrenome',
+              icon: Icons.person_outline,
+            ),
+            const SizedBox(height: 16),
+            _buildField(
+              controller: _cpfController,
+              label: 'CPF',
+              icon: Icons.badge_outlined,
+              keyboardType: TextInputType.number,
+              inputFormatters: [_cpfMask], // ✅ máscara CPF
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Informe seu CPF';
+                }
+                final digits = value.replaceAll(RegExp(r'\D'), '');
+                if (digits.length != 11) {
+                  return 'CPF incompleto';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildField(
+              controller: _dataNascimentoController,
+              label: 'Data de nascimento',
+              icon: Icons.cake_outlined,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.done,
+              inputFormatters: [_dataMask], // ✅ máscara data
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Informe sua data de nascimento';
+                }
+                final digits = value.replaceAll(RegExp(r'\D'), '');
+                if (digits.length != 8) {
+                  return 'Data incompleta';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () => _nextPage(_formKey1),
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: const Text('Proximo'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Etapa 2: Acesso ───────────────────────────────────────────────────────
+
+  Widget _buildEtapa2() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Form(
+        key: _formKey2,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const _SectionTitle(title: 'E-mail e senha'),
+            const SizedBox(height: 4),
+            const Text('Etapa 2 de 3'),
+            const SizedBox(height: 20),
+            _buildField(
+              controller: _emailController,
+              label: 'E-mail',
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Informe seu e-mail';
+                }
+                if (!value.contains('@')) return 'E-mail invalido';
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildField(
+              controller: _passwordController,
+              label: 'Senha',
+              icon: Icons.lock_outline,
+              obscureText: true,
+              validator: (value) {
+                if (value == null || value.isEmpty) return 'Informe a senha';
+                if (value.length < 6) return 'Minimo 6 caracteres';
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildField(
+              controller: _confirmPasswordController,
+              label: 'Confirmar senha',
+              icon: Icons.lock_outline,
+              obscureText: true,
+              textInputAction: TextInputAction.done,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Confirme a senha';
+                }
+                if (value != _passwordController.text) {
+                  return 'As senhas nao conferem';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _prevPage,
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text('Voltar'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _nextPage(_formKey2),
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text('Proximo'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Etapa 3: Endereço + termos ────────────────────────────────────────────
+
+  Widget _buildEtapa3() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Form(
+        key: _formKey3,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const _SectionTitle(title: 'Endereco residencial'),
+            const SizedBox(height: 4),
+            const Text('Etapa 3 de 3'),
+            const SizedBox(height: 20),
+            _buildField(
+              controller: _enderecoController,
+              label: 'Endereco',
+              icon: Icons.location_on_outlined,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: _buildField(
+                    controller: _bairroController,
+                    label: 'Bairro',
+                    icon: Icons.map_outlined,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildField(
+                    controller: _numeroController,
+                    label: 'Numero',
+                    icon: Icons.tag,
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: _buildField(
+                    controller: _cidadeController,
+                    label: 'Cidade',
+                    icon: Icons.location_city_outlined,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildField(
+                    controller: _estadoController,
+                    label: 'UF',
+                    icon: Icons.flag_outlined,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildField(
+              controller: _cepController,
+              label: 'CEP',
+              icon: Icons.markunread_mailbox_outlined,
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildField(
+                    controller: _latitudeController,
+                    label: 'Latitude',
+                    icon: Icons.my_location_outlined,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                      signed: true,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Obrigatorio';
+                      }
+                      if (double.tryParse(value.trim()) == null) {
+                        return 'Invalido';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildField(
+                    controller: _longitudeController,
+                    label: 'Longitude',
+                    icon: Icons.my_location_outlined,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                      signed: true,
+                    ),
+                    textInputAction: TextInputAction.done,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Obrigatorio';
+                      }
+                      if (double.tryParse(value.trim()) == null) {
+                        return 'Invalido';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // ── Termos ──────────────────────────────────────────────────────
+            Row(
+              children: [
+                Checkbox(
+                  value: _aceitouTermos,
+                  onChanged: (value) =>
+                      setState(() => _aceitouTermos = value ?? false),
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _abrirTermos,
+                    child: RichText(
+                      text: TextSpan(
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        children: [
+                          const TextSpan(text: 'Li e aceito os '),
+                          TextSpan(
+                            text: 'Termos de Uso',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              decoration: TextDecoration.underline,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            if (_errorMessage.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _RegisterError(message: _errorMessage),
+            ],
+
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _prevPage,
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text('Voltar'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _handleRegister,
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : const Text('Criar conta'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Componentes ───────────────────────────────────────────────────────────────
+
+class _ProgressBar extends StatelessWidget {
+  final int currentPage;
+  final int totalPages;
+
+  const _ProgressBar({required this.currentPage, required this.totalPages});
+
+  @override
+  Widget build(BuildContext context) {
+    return LinearProgressIndicator(
+      value: (currentPage + 1) / totalPages,
+      backgroundColor: Colors.grey.shade200,
+      valueColor: AlwaysStoppedAnimation<Color>(
+        Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -276,7 +640,7 @@ class _SectionTitle extends StatelessWidget {
       title,
       style: Theme.of(
         context,
-      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+      ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
     );
   }
 }
