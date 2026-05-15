@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:projeto_perguntas/services/auth_service.dart';
 import 'package:projeto_perguntas/services/auth_storage.dart';
 import 'package:projeto_perguntas/core/routes/app_routes.dart';
 import 'package:projeto_perguntas/core/resources/app_strings.dart';
 import 'package:projeto_perguntas/screens/widgets/termos_entregador_texto.dart';
+import 'package:projeto_perguntas/screens/widgets/register_progress_bar.dart';
+import 'package:projeto_perguntas/screens/widgets/register_error.dart';
+import 'package:projeto_perguntas/screens/widgets/register_section_title.dart';
+import 'package:projeto_perguntas/screens/widgets/register_field.dart';
 
 class RegisterEntregadorScreen extends StatefulWidget {
   const RegisterEntregadorScreen({super.key});
@@ -51,8 +54,6 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
   final _cidadeController = TextEditingController();
   final _estadoController = TextEditingController();
   final _cepController = TextEditingController();
-  final _latitudeController = TextEditingController();
-  final _longitudeController = TextEditingController();
   bool _aceitouTermos = false;
 
   bool _isLoading = false;
@@ -74,8 +75,6 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
     _cidadeController.dispose();
     _estadoController.dispose();
     _cepController.dispose();
-    _latitudeController.dispose();
-    _longitudeController.dispose();
     super.dispose();
   }
 
@@ -116,8 +115,8 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
       'email': _emailController.text.trim(),
       'password': _passwordController.text,
       'tipo': 'MOTOBOY',
-      'latitude': double.tryParse(_latitudeController.text.trim()) ?? 0.0,
-      'longitude': double.tryParse(_longitudeController.text.trim()) ?? 0.0,
+      'latitude': 0.0,
+      'longitude': 0.0,
     });
 
     if (!mounted) return;
@@ -183,43 +182,6 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
     );
   }
 
-  Widget _buildField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-    TextInputAction textInputAction = TextInputAction.next,
-    bool obscureText = false,
-    List<TextInputFormatter>? inputFormatters,
-    String? Function(String?)? validator,
-  }) {
-    final labelStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
-    );
-
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      textInputAction: textInputAction,
-      obscureText: obscureText,
-      inputFormatters: inputFormatters,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: labelStyle,
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-      validator:
-          validator ??
-          (value) {
-            if (value == null || value.trim().isEmpty) {
-              return AppStrings.campoObrigatorio;
-            }
-            return null;
-          },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -227,7 +189,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
         title: const Text(AppStrings.cadastroEntregador),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(4),
-          child: _ProgressBar(currentPage: _currentPage, totalPages: 3),
+          child: RegisterProgressBar(currentPage: _currentPage, totalPages: 3),
         ),
       ),
       body: PageView(
@@ -249,55 +211,51 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const _SectionTitle(title: AppStrings.dadosPessoais),
+            const RegisterSectionTitle(title: AppStrings.dadosPessoais),
             const SizedBox(height: 4),
             const Text(AppStrings.etapa1de3),
             const SizedBox(height: 20),
-            _buildField(
+            RegisterField(
               controller: _nomeController,
               label: AppStrings.nome,
               icon: Icons.person_outline,
             ),
             const SizedBox(height: 16),
-            _buildField(
+            RegisterField(
               controller: _sobrenomeController,
               label: AppStrings.sobrenome,
               icon: Icons.person_outline,
             ),
             const SizedBox(height: 16),
-            _buildField(
+            RegisterField(
               controller: _cpfController,
               label: AppStrings.cpf,
               icon: Icons.badge_outlined,
               keyboardType: TextInputType.number,
-              inputFormatters: [_cpfMask], // ✅ máscara CPF
+              inputFormatters: [_cpfMask],
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return AppStrings.informeCpf;
                 }
                 final digits = value.replaceAll(RegExp(r'\D'), '');
-                if (digits.length != 11) {
-                  return AppStrings.cpfIncompleto;
-                }
+                if (digits.length != 11) return AppStrings.cpfIncompleto;
                 return null;
               },
             ),
             const SizedBox(height: 16),
-            _buildField(
+            RegisterField(
               controller: _dataNascimentoController,
               label: AppStrings.dataNascimento,
               icon: Icons.cake_outlined,
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.done,
-              inputFormatters: [_dataMask], // ✅ máscara data
+              inputFormatters: [_dataMask],
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return AppStrings.informeDataNascimento;
                 }
                 final digits = value.replaceAll(RegExp(r'\D'), '');
-                if (digits.length != 8) {
-                  return AppStrings.dataIncompleta;
-                }
+                if (digits.length != 8) return AppStrings.dataIncompleta;
                 return null;
               },
             ),
@@ -328,11 +286,11 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const _SectionTitle(title: AppStrings.emailESenha),
+            const RegisterSectionTitle(title: AppStrings.emailESenha),
             const SizedBox(height: 4),
             const Text(AppStrings.etapa2de3),
             const SizedBox(height: 20),
-            _buildField(
+            RegisterField(
               controller: _emailController,
               label: AppStrings.email,
               icon: Icons.email_outlined,
@@ -346,20 +304,23 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
               },
             ),
             const SizedBox(height: 16),
-            _buildField(
+            RegisterField(
               controller: _passwordController,
               label: AppStrings.senha,
               icon: Icons.lock_outline,
               obscureText: true,
               validator: (value) {
-                if (value == null || value.isEmpty)
+                if (value == null || value.isEmpty) {
                   return AppStrings.informeSenha;
-                if (value.length < 6) return AppStrings.minimo6Caracteres;
+                }
+                if (value.length < 6) {
+                  return AppStrings.minimo6Caracteres;
+                }
                 return null;
               },
             ),
             const SizedBox(height: 16),
-            _buildField(
+            RegisterField(
               controller: _confirmPasswordController,
               label: AppStrings.confirmarSenha,
               icon: Icons.lock_outline,
@@ -421,11 +382,11 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const _SectionTitle(title: AppStrings.enderecoResidencial),
+            const RegisterSectionTitle(title: AppStrings.enderecoResidencial),
             const SizedBox(height: 4),
             const Text(AppStrings.etapa3de3),
             const SizedBox(height: 20),
-            _buildField(
+            RegisterField(
               controller: _enderecoController,
               label: AppStrings.endereco,
               icon: Icons.location_on_outlined,
@@ -435,7 +396,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
               children: [
                 Expanded(
                   flex: 2,
-                  child: _buildField(
+                  child: RegisterField(
                     controller: _bairroController,
                     label: AppStrings.bairro,
                     icon: Icons.map_outlined,
@@ -443,7 +404,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _buildField(
+                  child: RegisterField(
                     controller: _numeroController,
                     label: AppStrings.numero,
                     icon: Icons.tag,
@@ -457,7 +418,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
               children: [
                 Expanded(
                   flex: 2,
-                  child: _buildField(
+                  child: RegisterField(
                     controller: _cidadeController,
                     label: AppStrings.cidade,
                     icon: Icons.location_city_outlined,
@@ -465,7 +426,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _buildField(
+                  child: RegisterField(
                     controller: _estadoController,
                     label: AppStrings.uf,
                     icon: Icons.flag_outlined,
@@ -474,58 +435,11 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            _buildField(
+            RegisterField(
               controller: _cepController,
               label: AppStrings.cep,
               icon: Icons.markunread_mailbox_outlined,
               keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildField(
-                    controller: _latitudeController,
-                    label: AppStrings.latitude,
-                    icon: Icons.my_location_outlined,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                      signed: true,
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return AppStrings.obrigatorio;
-                      }
-                      if (double.tryParse(value.trim()) == null) {
-                        return AppStrings.invalido;
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildField(
-                    controller: _longitudeController,
-                    label: AppStrings.longitude,
-                    icon: Icons.my_location_outlined,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                      signed: true,
-                    ),
-                    textInputAction: TextInputAction.done,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return AppStrings.obrigatorio;
-                      }
-                      if (double.tryParse(value.trim()) == null) {
-                        return AppStrings.invalido;
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-              ],
             ),
             const SizedBox(height: 24),
 
@@ -563,7 +477,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
 
             if (_errorMessage.isNotEmpty) ...[
               const SizedBox(height: 12),
-              _RegisterError(message: _errorMessage),
+              RegisterError(message: _errorMessage),
             ],
 
             const SizedBox(height: 24),
@@ -607,67 +521,6 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// ── Componentes ───────────────────────────────────────────────────────────────
-
-class _ProgressBar extends StatelessWidget {
-  final int currentPage;
-  final int totalPages;
-
-  const _ProgressBar({required this.currentPage, required this.totalPages});
-
-  @override
-  Widget build(BuildContext context) {
-    return LinearProgressIndicator(
-      value: (currentPage + 1) / totalPages,
-      backgroundColor: Colors.grey.shade200,
-      valueColor: AlwaysStoppedAnimation<Color>(
-        Theme.of(context).colorScheme.primary,
-      ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  final String title;
-  const _SectionTitle({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: Theme.of(
-        context,
-      ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-    );
-  }
-}
-
-class _RegisterError extends StatelessWidget {
-  final String message;
-  const _RegisterError({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.red.shade200),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.error_outline, color: Colors.red),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(message, style: TextStyle(color: Colors.red.shade800)),
-          ),
-        ],
       ),
     );
   }
