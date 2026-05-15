@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projeto_perguntas/core/resources/app_strings.dart';
 import 'package:projeto_perguntas/services/auth_service.dart';
 import 'package:projeto_perguntas/services/auth_storage.dart';
 import 'package:projeto_perguntas/core/routes/app_routes.dart';
@@ -71,7 +72,7 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Restaurante cadastrado com sucesso!')),
+          const SnackBar(content: Text(AppStrings.restauranteCadastrado)),
         );
 
         Navigator.of(context).pushReplacementNamed(AppRoutes.home);
@@ -79,9 +80,7 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cadastro concluido. Faca login para continuar.'),
-        ),
+        const SnackBar(content: Text(AppStrings.cadastroConcluidoLogin)),
       );
       Navigator.of(context).pushReplacementNamed(AppRoutes.login);
     }
@@ -134,7 +133,7 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
           validator ??
           (value) {
             if (value == null || value.trim().isEmpty) {
-              return 'Campo obrigatorio';
+              return AppStrings.campoObrigatorio;
             }
             return null;
           },
@@ -144,7 +143,7 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Cadastro de Restaurante')),
+      appBar: AppBar(title: const Text(AppStrings.cadastroRestaurante)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -158,35 +157,36 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
               ],
 
               // ── Dados da conta ──────────────────────────────────────────
-              _SectionTitle(title: 'Dados da conta'),
+              _SectionTitle(title: AppStrings.dadosConta),
               const SizedBox(height: 12),
               _buildField(
                 controller: _nomeController,
-                label: 'Nome do restaurante',
+                label: AppStrings.nomeRestaurante,
                 icon: Icons.storefront_outlined,
               ),
               const SizedBox(height: 16),
               _buildField(
                 controller: _emailController,
-                label: 'E-mail',
+                label: AppStrings.email,
                 icon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Informe o e-mail';
+                    return AppStrings.informeEmail;
                   }
-                  if (!value.contains('@')) return 'E-mail invalido';
+                  if (!value.contains('@')) return AppStrings.emailInvalido;
                   return null;
                 },
               ),
               const SizedBox(height: 16),
               _buildField(
                 controller: _passwordController,
-                label: 'Senha',
+                label: AppStrings.senha,
                 icon: Icons.lock_outline,
                 obscureText: true,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Informe a senha';
+                  if (value == null || value.isEmpty)
+                    return AppStrings.informeSenha;
                   if (value.length < 6) {
                     return 'Minimo 6 caracteres';
                   }
@@ -196,16 +196,16 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
               const SizedBox(height: 16),
               _buildField(
                 controller: _confirmPasswordController,
-                label: 'Confirmar senha',
+                label: AppStrings.confirmarSenha,
                 icon: Icons.lock_outline,
                 obscureText: true,
                 textInputAction: TextInputAction.next,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Confirme a senha';
+                    return AppStrings.confirmeSenha;
                   }
                   if (value != _passwordController.text) {
-                    return 'As senhas nao conferem';
+                    return AppStrings.senhasNaoConferem;
                   }
                   return null;
                 },
@@ -214,28 +214,28 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
               const SizedBox(height: 28),
 
               // ── Dados do restaurante ────────────────────────────────────
-              _SectionTitle(title: 'Dados do restaurante'),
+              _SectionTitle(title: AppStrings.dadosRestaurante),
               const SizedBox(height: 12),
               _buildField(
                 controller: _cpfCnpjController,
-                label: 'CPF / CNPJ',
+                label: AppStrings.cpfCnpj,
                 icon: Icons.badge_outlined,
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 16),
               _buildField(
                 controller: _taxaEntregaController,
-                label: 'Taxa de entrega (R\$)',
+                label: AppStrings.taxaEntrega,
                 icon: Icons.attach_money,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Informe a taxa de entrega';
+                    return AppStrings.informeTaxaEntrega;
                   }
                   if (double.tryParse(value.trim()) == null) {
-                    return 'Valor invalido';
+                    return AppStrings.valorInvalido;
                   }
                   return null;
                 },
@@ -244,11 +244,11 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
               const SizedBox(height: 28),
 
               // ── Endereco ────────────────────────────────────────────────
-              _SectionTitle(title: 'Endereco'),
+              _SectionTitle(title: AppStrings.endereco),
               const SizedBox(height: 12),
               _buildField(
                 controller: _enderecoController,
-                label: 'Endereco',
+                label: AppStrings.endereco,
                 icon: Icons.location_on_outlined,
               ),
               const SizedBox(height: 16),
@@ -258,7 +258,7 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
                     flex: 2,
                     child: _buildField(
                       controller: _bairroController,
-                      label: 'Bairro',
+                      label: AppStrings.bairro,
                       icon: Icons.map_outlined,
                     ),
                   ),
@@ -266,7 +266,7 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
                   Expanded(
                     child: _buildField(
                       controller: _numeroController,
-                      label: 'Numero',
+                      label: AppStrings.numero,
                       icon: Icons.tag,
                       keyboardType: TextInputType.number,
                     ),
@@ -280,7 +280,7 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
                     flex: 2,
                     child: _buildField(
                       controller: _cidadeController,
-                      label: 'Cidade',
+                      label: AppStrings.cidade,
                       icon: Icons.location_city_outlined,
                     ),
                   ),
@@ -288,7 +288,7 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
                   Expanded(
                     child: _buildField(
                       controller: _estadoController,
-                      label: 'Estado',
+                      label: AppStrings.estado,
                       icon: Icons.flag_outlined,
                     ),
                   ),
@@ -297,7 +297,7 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
               const SizedBox(height: 16),
               _buildField(
                 controller: _cepController,
-                label: 'CEP',
+                label: AppStrings.cep,
                 icon: Icons.markunread_mailbox_outlined,
                 keyboardType: TextInputType.number,
               ),
@@ -305,14 +305,14 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
               const SizedBox(height: 28),
 
               // ── Localizacao ─────────────────────────────────────────────
-              _SectionTitle(title: 'Localizacao'),
+              _SectionTitle(title: AppStrings.localizacao),
               const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
                     child: _buildField(
                       controller: _latitudeController,
-                      label: 'Latitude',
+                      label: AppStrings.latitude,
                       icon: Icons.my_location_outlined,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
@@ -320,10 +320,10 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Obrigatorio';
+                          return AppStrings.obrigatorio;
                         }
                         if (double.tryParse(value.trim()) == null) {
-                          return 'Invalido';
+                          return AppStrings.invalido;
                         }
                         return null;
                       },
@@ -333,7 +333,7 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
                   Expanded(
                     child: _buildField(
                       controller: _longitudeController,
-                      label: 'Longitude',
+                      label: AppStrings.longitude,
                       icon: Icons.my_location_outlined,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
@@ -342,10 +342,10 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
                       textInputAction: TextInputAction.done,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Obrigatorio';
+                          return AppStrings.obrigatorio;
                         }
                         if (double.tryParse(value.trim()) == null) {
-                          return 'Invalido';
+                          return AppStrings.invalido;
                         }
                         return null;
                       },
@@ -374,7 +374,7 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
                             strokeWidth: 2.5,
                           ),
                         )
-                      : const Text('Cadastrar restaurante'),
+                      : const Text(AppStrings.cadastrarRestaurante),
                 ),
               ),
             ],

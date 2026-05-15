@@ -4,6 +4,7 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:projeto_perguntas/services/auth_service.dart';
 import 'package:projeto_perguntas/services/auth_storage.dart';
 import 'package:projeto_perguntas/core/routes/app_routes.dart';
+import 'package:projeto_perguntas/core/resources/app_strings.dart';
 import 'package:projeto_perguntas/screens/widgets/termos_entregador_texto.dart';
 
 class RegisterEntregadorScreen extends StatefulWidget {
@@ -97,7 +98,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
   Future<void> _handleRegister() async {
     if (!_formKey3.currentState!.validate()) return;
     if (!_aceitouTermos) {
-      setState(() => _errorMessage = 'Voce precisa aceitar os termos de uso.');
+      setState(() => _errorMessage = AppStrings.precisaAceitarTermos);
       return;
     }
 
@@ -131,7 +132,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Entregador cadastrado com sucesso!')),
+        const SnackBar(content: Text(AppStrings.entregadorCadastrado)),
       );
 
       Navigator.of(context).pushReplacementNamed(AppRoutes.home);
@@ -164,7 +165,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Text(
-                'Termo de Condições de Uso',
+                AppStrings.termosTitulo,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
@@ -212,7 +213,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
           validator ??
           (value) {
             if (value == null || value.trim().isEmpty) {
-              return 'Campo obrigatorio';
+              return AppStrings.campoObrigatorio;
             }
             return null;
           },
@@ -223,7 +224,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cadastro de Entregador'),
+        title: const Text(AppStrings.cadastroEntregador),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(4),
           child: _ProgressBar(currentPage: _currentPage, totalPages: 3),
@@ -248,35 +249,35 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const _SectionTitle(title: 'Dados pessoais'),
+            const _SectionTitle(title: AppStrings.dadosPessoais),
             const SizedBox(height: 4),
-            const Text('Etapa 1 de 3'),
+            const Text(AppStrings.etapa1de3),
             const SizedBox(height: 20),
             _buildField(
               controller: _nomeController,
-              label: 'Nome',
+              label: AppStrings.nome,
               icon: Icons.person_outline,
             ),
             const SizedBox(height: 16),
             _buildField(
               controller: _sobrenomeController,
-              label: 'Sobrenome',
+              label: AppStrings.sobrenome,
               icon: Icons.person_outline,
             ),
             const SizedBox(height: 16),
             _buildField(
               controller: _cpfController,
-              label: 'CPF',
+              label: AppStrings.cpf,
               icon: Icons.badge_outlined,
               keyboardType: TextInputType.number,
               inputFormatters: [_cpfMask], // ✅ máscara CPF
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Informe seu CPF';
+                  return AppStrings.informeCpf;
                 }
                 final digits = value.replaceAll(RegExp(r'\D'), '');
                 if (digits.length != 11) {
-                  return 'CPF incompleto';
+                  return AppStrings.cpfIncompleto;
                 }
                 return null;
               },
@@ -284,18 +285,18 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
             const SizedBox(height: 16),
             _buildField(
               controller: _dataNascimentoController,
-              label: 'Data de nascimento',
+              label: AppStrings.dataNascimento,
               icon: Icons.cake_outlined,
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.done,
               inputFormatters: [_dataMask], // ✅ máscara data
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Informe sua data de nascimento';
+                  return AppStrings.informeDataNascimento;
                 }
                 final digits = value.replaceAll(RegExp(r'\D'), '');
                 if (digits.length != 8) {
-                  return 'Data incompleta';
+                  return AppStrings.dataIncompleta;
                 }
                 return null;
               },
@@ -309,7 +310,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: const Text('Proximo'),
+              child: const Text(AppStrings.proximo),
             ),
           ],
         ),
@@ -327,48 +328,49 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const _SectionTitle(title: 'E-mail e senha'),
+            const _SectionTitle(title: AppStrings.emailESenha),
             const SizedBox(height: 4),
-            const Text('Etapa 2 de 3'),
+            const Text(AppStrings.etapa2de3),
             const SizedBox(height: 20),
             _buildField(
               controller: _emailController,
-              label: 'E-mail',
+              label: AppStrings.email,
               icon: Icons.email_outlined,
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Informe seu e-mail';
+                  return AppStrings.informeEmail;
                 }
-                if (!value.contains('@')) return 'E-mail invalido';
+                if (!value.contains('@')) return AppStrings.emailInvalido;
                 return null;
               },
             ),
             const SizedBox(height: 16),
             _buildField(
               controller: _passwordController,
-              label: 'Senha',
+              label: AppStrings.senha,
               icon: Icons.lock_outline,
               obscureText: true,
               validator: (value) {
-                if (value == null || value.isEmpty) return 'Informe a senha';
-                if (value.length < 6) return 'Minimo 6 caracteres';
+                if (value == null || value.isEmpty)
+                  return AppStrings.informeSenha;
+                if (value.length < 6) return AppStrings.minimo6Caracteres;
                 return null;
               },
             ),
             const SizedBox(height: 16),
             _buildField(
               controller: _confirmPasswordController,
-              label: 'Confirmar senha',
+              label: AppStrings.confirmarSenha,
               icon: Icons.lock_outline,
               obscureText: true,
               textInputAction: TextInputAction.done,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Confirme a senha';
+                  return AppStrings.confirmeSenha;
                 }
                 if (value != _passwordController.text) {
-                  return 'As senhas nao conferem';
+                  return AppStrings.senhasNaoConferem;
                 }
                 return null;
               },
@@ -385,7 +387,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text('Voltar'),
+                    child: const Text(AppStrings.voltar),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -398,7 +400,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text('Proximo'),
+                    child: const Text(AppStrings.proximo),
                   ),
                 ),
               ],
@@ -419,13 +421,13 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const _SectionTitle(title: 'Endereco residencial'),
+            const _SectionTitle(title: AppStrings.enderecoResidencial),
             const SizedBox(height: 4),
-            const Text('Etapa 3 de 3'),
+            const Text(AppStrings.etapa3de3),
             const SizedBox(height: 20),
             _buildField(
               controller: _enderecoController,
-              label: 'Endereco',
+              label: AppStrings.endereco,
               icon: Icons.location_on_outlined,
             ),
             const SizedBox(height: 16),
@@ -435,7 +437,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
                   flex: 2,
                   child: _buildField(
                     controller: _bairroController,
-                    label: 'Bairro',
+                    label: AppStrings.bairro,
                     icon: Icons.map_outlined,
                   ),
                 ),
@@ -443,7 +445,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
                 Expanded(
                   child: _buildField(
                     controller: _numeroController,
-                    label: 'Numero',
+                    label: AppStrings.numero,
                     icon: Icons.tag,
                     keyboardType: TextInputType.number,
                   ),
@@ -457,7 +459,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
                   flex: 2,
                   child: _buildField(
                     controller: _cidadeController,
-                    label: 'Cidade',
+                    label: AppStrings.cidade,
                     icon: Icons.location_city_outlined,
                   ),
                 ),
@@ -465,7 +467,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
                 Expanded(
                   child: _buildField(
                     controller: _estadoController,
-                    label: 'UF',
+                    label: AppStrings.uf,
                     icon: Icons.flag_outlined,
                   ),
                 ),
@@ -474,7 +476,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
             const SizedBox(height: 16),
             _buildField(
               controller: _cepController,
-              label: 'CEP',
+              label: AppStrings.cep,
               icon: Icons.markunread_mailbox_outlined,
               keyboardType: TextInputType.number,
             ),
@@ -484,7 +486,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
                 Expanded(
                   child: _buildField(
                     controller: _latitudeController,
-                    label: 'Latitude',
+                    label: AppStrings.latitude,
                     icon: Icons.my_location_outlined,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -492,10 +494,10 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Obrigatorio';
+                        return AppStrings.obrigatorio;
                       }
                       if (double.tryParse(value.trim()) == null) {
-                        return 'Invalido';
+                        return AppStrings.invalido;
                       }
                       return null;
                     },
@@ -505,7 +507,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
                 Expanded(
                   child: _buildField(
                     controller: _longitudeController,
-                    label: 'Longitude',
+                    label: AppStrings.longitude,
                     icon: Icons.my_location_outlined,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -514,10 +516,10 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
                     textInputAction: TextInputAction.done,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Obrigatorio';
+                        return AppStrings.obrigatorio;
                       }
                       if (double.tryParse(value.trim()) == null) {
-                        return 'Invalido';
+                        return AppStrings.invalido;
                       }
                       return null;
                     },
@@ -542,9 +544,9 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
                       text: TextSpan(
                         style: Theme.of(context).textTheme.bodyMedium,
                         children: [
-                          const TextSpan(text: 'Li e aceito os '),
+                          const TextSpan(text: AppStrings.liEAceito),
                           TextSpan(
-                            text: 'Termos de Uso',
+                            text: AppStrings.termosUso,
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.primary,
                               decoration: TextDecoration.underline,
@@ -576,7 +578,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text('Voltar'),
+                    child: const Text(AppStrings.voltar),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -598,7 +600,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
                               strokeWidth: 2.5,
                             ),
                           )
-                        : const Text('Criar conta'),
+                        : const Text(AppStrings.criarConta),
                   ),
                 ),
               ],
