@@ -9,6 +9,7 @@ class RegisterField extends StatelessWidget {
   final TextInputAction textInputAction;
   final bool obscureText;
   final List<TextInputFormatter>? inputFormatters;
+  final ValueChanged<String>? onChanged;
   final String? Function(String?)? validator;
   final String? defaultErrorMessage;
 
@@ -21,6 +22,7 @@ class RegisterField extends StatelessWidget {
     this.textInputAction = TextInputAction.next,
     this.obscureText = false,
     this.inputFormatters,
+    this.onChanged,
     this.validator,
     this.defaultErrorMessage = 'Campo obrigatorio',
   });
@@ -37,6 +39,7 @@ class RegisterField extends StatelessWidget {
       textInputAction: textInputAction,
       obscureText: obscureText,
       inputFormatters: inputFormatters,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: labelStyle,

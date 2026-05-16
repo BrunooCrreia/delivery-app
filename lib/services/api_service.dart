@@ -117,4 +117,23 @@ class ApiService {
       rethrow;
     }
   }
+
+  /// GET /address/:cep
+  Future<Map<String, dynamic>> getAddressByCep(String cep) async {
+    try {
+      final response = await _httpClient.get(
+        '/address/$cep',
+        requireAuth: false,
+      );
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } on TokenException {
+      rethrow;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('=== GET ADDRESS BY CEP ERROR ===');
+        debugPrint('Error: $e');
+      }
+      rethrow;
+    }
+  }
 }

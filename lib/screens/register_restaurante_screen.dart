@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:projeto_perguntas/core/resources/app_strings.dart';
+import 'package:projeto_perguntas/services/api_service.dart';
 import 'package:projeto_perguntas/services/auth_service.dart';
 import 'package:projeto_perguntas/services/auth_storage.dart';
 import 'package:projeto_perguntas/core/routes/app_routes.dart';
@@ -7,6 +9,7 @@ import 'package:projeto_perguntas/screens/widgets/register_progress_bar.dart';
 import 'package:projeto_perguntas/screens/widgets/register_error.dart';
 import 'package:projeto_perguntas/screens/widgets/register_section_title.dart';
 import 'package:projeto_perguntas/screens/widgets/register_field.dart';
+import 'dart:async';
 
 class RegisterRestauranteScreen extends StatefulWidget {
   const RegisterRestauranteScreen({super.key});
@@ -18,6 +21,7 @@ class RegisterRestauranteScreen extends StatefulWidget {
 
 class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
   final PageController _pageController = PageController();
+  final ApiService _apiService = ApiService();
   int _currentPage = 0;
 
   // ── Etapa 1: Dados da conta ───────────────────────────────────────────────
@@ -44,10 +48,17 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
   final _longitudeController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isCepLoading = false;
+  bool _highlightNumeroField = false;
   String _errorMessage = '';
+  Timer? _cepDebounce;
+  String _lastFetchedCep = '';
+  int _cepRequestId = 0;
+  int _numeroBlinkRequestId = 0;
 
   @override
   void dispose() {
+    _cepDebounce?.cancel();
     _pageController.dispose();
     _nomeController.dispose();
     _emailController.dispose();
@@ -64,6 +75,102 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
     _latitudeController.dispose();
     _longitudeController.dispose();
     super.dispose();
+  }
+
+  String _digitsOnly(String value) => value.replaceAll(RegExp(r'[^0-9]'), '');
+
+  bool _isNullOrEmpty(dynamic value) {
+    return value == null || value.toString().trim().isEmpty;
+  }
+
+  bool _isInvalidCepPayload(Map<String, dynamic> data) {
+    return _isNullOrEmpty(data['street']) &&
+        _isNullOrEmpty(data['neighborhood']) &&
+        _isNullOrEmpty(data['city']) &&
+        _isNullOrEmpty(data['state']);
+  }
+
+  Future<void> _blinkNumeroField() async {
+    final blinkId = ++_numeroBlinkRequestId;
+
+    for (var i = 0; i < 4; i++) {
+      if (!mounted || blinkId != _numeroBlinkRequestId) return;
+      setState(() => _highlightNumeroField = i.isEven);
+      await Future<void>.delayed(const Duration(milliseconds: 170));
+    }
+
+    if (!mounted || blinkId != _numeroBlinkRequestId) return;
+    setState(() => _highlightNumeroField = false);
+  }
+
+  void _onCepChanged(String value) {
+    final cep = _digitsOnly(value);
+
+    _cepDebounce?.cancel();
+
+    if (cep.length != 8) {
+      _cepRequestId++;
+      _lastFetchedCep = '';
+      if (_isCepLoading) {
+        setState(() => _isCepLoading = false);
+      }
+      return;
+    }
+
+    if (_lastFetchedCep == cep) {
+      return;
+    }
+
+    _cepDebounce = Timer(const Duration(milliseconds: 450), () {
+      _fillAddressByCep(cep);
+    });
+  }
+
+  Future<void> _fillAddressByCep(String cep) async {
+    final requestId = ++_cepRequestId;
+
+    setState(() => _isCepLoading = true);
+
+    try {
+      final data = await _apiService.getAddressByCep(cep);
+      if (!mounted) return;
+      if (requestId != _cepRequestId) return;
+
+      if (_isInvalidCepPayload(data)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('CEP invalido. Verifique e tente novamente.'),
+          ),
+        );
+        _lastFetchedCep = '';
+        return;
+      }
+
+      _enderecoController.text = (data['street'] as String? ?? '').trim();
+      _bairroController.text = (data['neighborhood'] as String? ?? '').trim();
+      _cidadeController.text = (data['city'] as String? ?? '').trim();
+      _estadoController.text = (data['state'] as String? ?? '').trim();
+
+      final zipCode = (data['zipCode'] as String? ?? '').trim();
+      if (zipCode.isNotEmpty) {
+        _cepController.text = zipCode;
+      }
+
+      _lastFetchedCep = cep;
+      _blinkNumeroField();
+    } catch (_) {
+      if (!mounted) return;
+      if (requestId != _cepRequestId) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nao foi possivel buscar o endereco pelo CEP.'),
+        ),
+      );
+    } finally {
+      if (mounted && requestId == _cepRequestId) {
+        setState(() => _isCepLoading = false);
+      }
+    }
   }
 
   void _nextPage(GlobalKey<FormState> formKey) {
@@ -356,11 +463,24 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: RegisterField(
-                    controller: _numeroController,
-                    label: AppStrings.numero,
-                    icon: Icons.tag,
-                    keyboardType: TextInputType.number,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: _highlightNumeroField
+                            ? Colors.red
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: RegisterField(
+                      controller: _numeroController,
+                      label: AppStrings.numero,
+                      icon: Icons.tag,
+                      keyboardType: TextInputType.number,
+                    ),
                   ),
                 ),
               ],
@@ -392,7 +512,26 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
               label: AppStrings.cep,
               icon: Icons.markunread_mailbox_outlined,
               keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(8),
+              ],
+              onChanged: _onCepChanged,
             ),
+            if (_isCepLoading) ...[
+              const SizedBox(height: 10),
+              const Row(
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 8),
+                  Text('Buscando endereco pelo CEP...'),
+                ],
+              ),
+            ],
             const SizedBox(height: 28),
             const RegisterSectionTitle(
               title: AppStrings.localizacao,
