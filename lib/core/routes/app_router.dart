@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../../screens/home_screen.dart';
 import '../../screens/login_screen.dart';
 import '../../screens/register_type_screen.dart';
-import '../../screens/register_entregador_screen.dart';
-import '../../screens/register_restaurante_screen.dart';
+import '../../screens/register_entregador/register_entregador_screen.dart';
+import '../../screens/register_restaurante/register_restaurante_screen.dart';
 import 'app_routes.dart';
 
 class AppRouter {

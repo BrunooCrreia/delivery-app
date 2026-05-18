@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_storage.dart';
-import '../services/api_service.dart';
+import '../services/vagas_service.dart';
 import '../utils/http_client.dart';
 import '../core/entities/vagas_entity.dart';
 import 'package:projeto_perguntas/core/routes/app_routes.dart';
@@ -116,7 +116,7 @@ class _VagasTab extends StatefulWidget {
 }
 
 class _VagasTabState extends State<_VagasTab> {
-  final ApiService _apiService = ApiService();
+  final VagasService _vagasService = VagasService();
   List<VagaEntity> _vagas = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -134,7 +134,7 @@ class _VagasTabState extends State<_VagasTab> {
     });
 
     try {
-      final vagas = await _apiService.getVagas();
+      final vagas = await _vagasService.getVagas();
       if (!mounted) return;
       setState(() {
         _vagas = vagas;

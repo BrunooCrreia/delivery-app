@@ -13,6 +13,10 @@ class AppStrings {
   static const informeDataNascimento = 'Informe sua data de nascimento';
   static const dataIncompleta = 'Data incompleta';
 
+  static const tipocontaRestaurante = 'Restaurante';
+  static const tipocontaEntregador = 'Entregador';
+  static const comoVoceQuerSeCadastrar = 'Como você quer se cadastrar?';
+  static const escolhaTipoConta = 'Escolha o tipo de conta que deseja criar.';
   static const emailESenha = 'E-mail e senha';
   static const etapa2de3 = 'Etapa 2 de 3';
   static const email = 'E-mail';

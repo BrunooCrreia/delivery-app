@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:projeto_perguntas/core/routes/app_routes.dart';
+import 'package:projeto_perguntas/core/resources/app_strings.dart'
+    as app_strings;
 
 class RegisterTypeScreen extends StatelessWidget {
   const RegisterTypeScreen({super.key});
@@ -15,7 +17,7 @@ class RegisterTypeScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 16),
             Text(
-              'Como você quer se cadastrar?',
+              app_strings.AppStrings.comoVoceQuerSeCadastrar,
               style: Theme.of(
                 context,
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
@@ -23,13 +25,13 @@ class RegisterTypeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Escolha o tipo de conta que deseja criar.',
+              app_strings.AppStrings.escolhaTipoConta,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 40),
             _TypeCard(
               icon: Icons.delivery_dining,
-              title: 'Entregador',
+              title: app_strings.AppStrings.tipocontaEntregador,
               description: 'Quero me candidatar a vagas de entrega.',
               onTap: () =>
                   Navigator.of(context).pushNamed(AppRoutes.registerMotoboy),
@@ -37,7 +39,7 @@ class RegisterTypeScreen extends StatelessWidget {
             const SizedBox(height: 16),
             _TypeCard(
               icon: Icons.storefront_outlined,
-              title: 'Restaurante',
+              title: app_strings.AppStrings.tipocontaRestaurante,
               description: 'Quero cadastrar meu restaurante e publicar vagas.',
               onTap: () => Navigator.of(
                 context,
