@@ -191,6 +191,8 @@ class RegisterEntregadorController extends ChangeNotifier {
       'email': emailController.text.trim(),
       'password': passwordController.text,
       'tipo': 'MOTOBOY',
+      'cpfCnpj': cpfController.text.trim(), // Alterado de 'cpf' para 'cpfCnpj'
+      'dataNascimento': dataNascimentoController.text.trim(),
       'latitude': 0.0,
       'longitude': 0.0,
     });
