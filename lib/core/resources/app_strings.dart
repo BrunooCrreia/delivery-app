@@ -22,6 +22,9 @@ class AppStrings {
   static const email = 'E-mail';
   static const informeEmail = 'Informe seu e-mail';
   static const emailInvalido = 'E-mail invalido';
+  static const telefone = 'Telefone';
+  static const informeTelefone = 'Informe seu telefone';
+  static const telefoneInvalido = 'Telefone invalido';
   static const senha = 'Senha';
   static const informeSenha = 'Informe a senha';
   static const minimo6Caracteres = 'Minimo 6 caracteres';

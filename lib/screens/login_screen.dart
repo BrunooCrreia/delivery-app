@@ -154,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   keyboardType: TextInputType.emailAddress,
                                   textInputAction: TextInputAction.next,
                                   decoration: InputDecoration(
-                                    labelText: 'E-mail ou telefone',
+                                    labelText: 'E-mail',
                                     labelStyle: labelStyle,
                                     prefixIcon: const Icon(
                                       Icons.person_outline,

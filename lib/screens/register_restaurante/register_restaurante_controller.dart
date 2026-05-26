@@ -19,6 +19,7 @@ class RegisterRestauranteController extends ChangeNotifier {
   final formKey1 = GlobalKey<FormState>();
   final nomeController = TextEditingController();
   final emailController = TextEditingController();
+  final telefoneController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
@@ -184,6 +185,7 @@ class RegisterRestauranteController extends ChangeNotifier {
     final result = await authService.register({
       'nome': nomeController.text.trim(),
       'email': emailController.text.trim(),
+      'telefone': _digitsOnly(telefoneController.text.trim()),
       'password': passwordController.text,
       'tipo': 'RESTAURANTE',
       'latitude': double.tryParse(latitudeController.text.trim()) ?? 0.0,
@@ -230,6 +232,7 @@ class RegisterRestauranteController extends ChangeNotifier {
 
     nomeController.dispose();
     emailController.dispose();
+    telefoneController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
 

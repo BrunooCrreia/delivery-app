@@ -35,6 +35,7 @@ class RegisterEntregadorController extends ChangeNotifier {
 
   final formKey2 = GlobalKey<FormState>();
   final emailController = TextEditingController();
+  final telefoneController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
@@ -86,6 +87,16 @@ class RegisterEntregadorController extends ChangeNotifier {
   }
 
   String _digitsOnly(String value) => value.replaceAll(RegExp(r'[^0-9]'), '');
+
+  String _formatBirthDateForApi(String value) {
+    final digits = _digitsOnly(value);
+    if (digits.length != 8) return value.trim();
+
+    final day = digits.substring(0, 2);
+    final month = digits.substring(2, 4);
+    final year = digits.substring(4, 8);
+    return '$year-$month-$day';
+  }
 
   bool _isNullOrEmpty(dynamic value) {
     return value == null || value.toString().trim().isEmpty;
@@ -189,10 +200,11 @@ class RegisterEntregadorController extends ChangeNotifier {
     final result = await authService.register({
       'nome': nomeCompleto,
       'email': emailController.text.trim(),
+      'telefone': _digitsOnly(telefoneController.text.trim()),
       'password': passwordController.text,
       'tipo': 'MOTOBOY',
       'cpfCnpj': cpfController.text.trim(), // Alterado de 'cpf' para 'cpfCnpj'
-      'dataNascimento': dataNascimentoController.text.trim(),
+      'dataNascimento': _formatBirthDateForApi(dataNascimentoController.text),
       'latitude': 0.0,
       'longitude': 0.0,
     });
@@ -224,6 +236,7 @@ class RegisterEntregadorController extends ChangeNotifier {
     dataNascimentoController.dispose();
 
     emailController.dispose();
+    telefoneController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
 
