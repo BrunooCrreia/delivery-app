@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:projeto_perguntas/core/resources/app_strings.dart';
 import 'package:projeto_perguntas/screens/register_entregador/register_entregador_controller.dart';
 import 'package:projeto_perguntas/screens/widgets/register_field.dart';
 import 'package:projeto_perguntas/screens/widgets/register_section_title.dart';
 
-class Step3Endereco extends StatelessWidget {
-  const Step3Endereco({super.key, required this.controller});
+class Step6Bancario extends StatelessWidget {
+  const Step6Bancario({super.key, required this.controller});
 
   final RegisterEntregadorController controller;
 
@@ -15,88 +14,67 @@ class Step3Endereco extends StatelessWidget {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Form(
-        key: controller.formKey3,
+        key: controller.formKey6,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const RegisterSectionTitle(title: AppStrings.enderecoResidencial),
+            const RegisterSectionTitle(title: 'Dados bancarios'),
             const SizedBox(height: 4),
-            const Text('Etapa 3 de 7'),
+            const Text('Etapa 6 de 7'),
             const SizedBox(height: 20),
             RegisterField(
-              controller: controller.enderecoController,
-              label: AppStrings.endereco,
-              icon: Icons.location_on_outlined,
+              controller: controller.bancoController,
+              label: 'Banco',
+              icon: Icons.account_balance_outlined,
             ),
             const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
-                  flex: 2,
                   child: RegisterField(
-                    controller: controller.bairroController,
-                    label: AppStrings.bairro,
-                    icon: Icons.map_outlined,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: RegisterField(
-                    controller: controller.numeroController,
-                    label: AppStrings.numero,
-                    icon: Icons.tag,
+                    controller: controller.agenciaController,
+                    label: 'Agencia',
+                    icon: Icons.account_tree_outlined,
                     keyboardType: TextInputType.number,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: RegisterField(
-                    controller: controller.cidadeController,
-                    label: AppStrings.cidade,
-                    icon: Icons.location_city_outlined,
-                  ),
-                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: RegisterField(
-                    controller: controller.estadoController,
-                    label: AppStrings.uf,
-                    icon: Icons.flag_outlined,
+                    controller: controller.contaController,
+                    label: 'Conta',
+                    icon: Icons.confirmation_number_outlined,
+                    keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.done,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             RegisterField(
-              controller: controller.cepController,
-              label: AppStrings.cep,
-              icon: Icons.markunread_mailbox_outlined,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(8),
-              ],
-              onChanged: (value) => controller.onCepChanged(value, context),
+              controller: controller.chavePixController,
+              label: 'Chave PIX',
+              icon: Icons.pix_outlined,
             ),
-            if (controller.isCepLoading) ...[
-              const SizedBox(height: 10),
-              const Row(
-                children: [
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  SizedBox(width: 8),
-                  Text('Buscando endereco pelo CEP...'),
-                ],
-              ),
-            ],
+            const SizedBox(height: 16),
+            RegisterField(
+              controller: controller.cpfTitularController,
+              label: 'CPF do titular da conta',
+              icon: Icons.badge_outlined,
+              keyboardType: TextInputType.number,
+              inputFormatters: [controller.cpfMask],
+              textInputAction: TextInputAction.done,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Informe o CPF do titular';
+                }
+                final digits = value.replaceAll(RegExp(r'\D'), '');
+                if (digits.length != 11) {
+                  return AppStrings.cpfIncompleto;
+                }
+                return null;
+              },
+            ),
             const SizedBox(height: 32),
             Row(
               children: [
@@ -115,7 +93,7 @@ class Step3Endereco extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => controller.nextPage(controller.formKey3),
+                    onPressed: () => controller.nextPage(controller.formKey6),
                     style: ElevatedButton.styleFrom(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18),

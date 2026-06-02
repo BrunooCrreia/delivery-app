@@ -27,15 +27,22 @@ class RegisterEntregadorController extends ChangeNotifier {
     filter: {'#': RegExp(r'[0-9]')},
   );
 
+  final telefoneMask = MaskTextInputFormatter(
+    mask: '(##) #####-####',
+    filter: {'#': RegExp(r'[0-9]')},
+  );
+
   final formKey1 = GlobalKey<FormState>();
-  final nomeController = TextEditingController();
-  final sobrenomeController = TextEditingController();
+  final nomeCompletoController = TextEditingController();
   final cpfController = TextEditingController();
+  final rgController = TextEditingController();
   final dataNascimentoController = TextEditingController();
+  final selfieController = TextEditingController();
+  final nomeMaeController = TextEditingController();
 
   final formKey2 = GlobalKey<FormState>();
-  final emailController = TextEditingController();
   final telefoneController = TextEditingController();
+  final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
@@ -46,6 +53,37 @@ class RegisterEntregadorController extends ChangeNotifier {
   final cidadeController = TextEditingController();
   final estadoController = TextEditingController();
   final cepController = TextEditingController();
+
+  final formKey4 = GlobalKey<FormState>();
+  final cnhNumeroController = TextEditingController();
+  final cnhCategoriaController = TextEditingController();
+  final cnhValidadeController = TextEditingController();
+  final cnhFrenteController = TextEditingController();
+  final cnhVersoController = TextEditingController();
+
+  final formKey5 = GlobalKey<FormState>();
+  final marcaModeloController = TextEditingController();
+  final anoVeiculoController = TextEditingController();
+  final placaController = TextEditingController();
+
+  final formKey6 = GlobalKey<FormState>();
+  final bancoController = TextEditingController();
+  final agenciaController = TextEditingController();
+  final contaController = TextEditingController();
+  final chavePixController = TextEditingController();
+  final cpfTitularController = TextEditingController();
+
+  final formKey7 = GlobalKey<FormState>();
+  final regiaoAtuacaoController = TextEditingController();
+  final horariosDisponiveisController = TextEditingController();
+  final meiCnpjController = TextEditingController();
+  final meiNomeEmpresaController = TextEditingController();
+
+  final List<String> tiposVeiculo = ['Moto', 'Bike', 'Carro'];
+  final List<String> opcoesPossuiMei = ['Sim', 'Nao'];
+
+  String? tipoVeiculoSelecionado;
+  String possuiMeiSelecionado = 'Nao';
 
   bool aceitouTermos = false;
   bool isLoading = false;
@@ -62,6 +100,20 @@ class RegisterEntregadorController extends ChangeNotifier {
 
   void setAceitouTermos(bool value) {
     aceitouTermos = value;
+    notifyListeners();
+  }
+
+  void setTipoVeiculo(String? value) {
+    tipoVeiculoSelecionado = value;
+    notifyListeners();
+  }
+
+  void setPossuiMei(String? value) {
+    possuiMeiSelecionado = value ?? 'Nao';
+    if (possuiMeiSelecionado != 'Sim') {
+      meiCnpjController.clear();
+      meiNomeEmpresaController.clear();
+    }
     notifyListeners();
   }
 
@@ -182,7 +234,14 @@ class RegisterEntregadorController extends ChangeNotifier {
   }
 
   Future<void> handleRegister(BuildContext context) async {
-    if (!formKey3.currentState!.validate()) return;
+    if (!formKey7.currentState!.validate()) return;
+
+    if (tipoVeiculoSelecionado == null || tipoVeiculoSelecionado!.isEmpty) {
+      errorMessage = 'Selecione o tipo do veiculo.';
+      notifyListeners();
+      return;
+    }
+
     if (!aceitouTermos) {
       errorMessage = AppStrings.precisaAceitarTermos;
       notifyListeners();
@@ -193,18 +252,49 @@ class RegisterEntregadorController extends ChangeNotifier {
     errorMessage = '';
     notifyListeners();
 
-    final nomeCompleto =
-        '${nomeController.text.trim()} ${sobrenomeController.text.trim()}';
-
     final authService = AuthService();
     final result = await authService.register({
-      'nome': nomeCompleto,
+      'nome': nomeCompletoController.text.trim(),
       'email': emailController.text.trim(),
       'telefone': _digitsOnly(telefoneController.text.trim()),
       'password': passwordController.text,
       'tipo': 'MOTOBOY',
-      'cpfCnpj': cpfController.text.trim(), // Alterado de 'cpf' para 'cpfCnpj'
+      'cpfCnpj': cpfController.text.trim(),
       'dataNascimento': _formatBirthDateForApi(dataNascimentoController.text),
+      'rg': rgController.text.trim(),
+      'nomeMae': nomeMaeController.text.trim().isEmpty
+          ? null
+          : nomeMaeController.text.trim(),
+      'selfieDocumento': selfieController.text.trim(),
+      'endereco': enderecoController.text.trim(),
+      'numero': numeroController.text.trim(),
+      'bairro': bairroController.text.trim(),
+      'cidade': cidadeController.text.trim(),
+      'estado': estadoController.text.trim(),
+      'cep': cepController.text.trim(),
+      'cnhNumero': cnhNumeroController.text.trim(),
+      'cnhCategoria': cnhCategoriaController.text.trim(),
+      'cnhValidade': _formatBirthDateForApi(cnhValidadeController.text),
+      'cnhFrente': cnhFrenteController.text.trim(),
+      'cnhVerso': cnhVersoController.text.trim(),
+      'tipoVeiculo': tipoVeiculoSelecionado,
+      'marcaModelo': marcaModeloController.text.trim(),
+      'anoVeiculo': anoVeiculoController.text.trim(),
+      'placa': placaController.text.trim().toUpperCase(),
+      'banco': bancoController.text.trim(),
+      'agencia': agenciaController.text.trim(),
+      'conta': contaController.text.trim(),
+      'chavePix': chavePixController.text.trim(),
+      'cpfTitularConta': cpfTitularController.text.trim(),
+      'regiaoAtuacao': regiaoAtuacaoController.text.trim(),
+      'horariosDisponiveis': horariosDisponiveisController.text.trim(),
+      'possuiMei': possuiMeiSelecionado,
+      'meiCnpj': possuiMeiSelecionado == 'Sim'
+          ? _digitsOnly(meiCnpjController.text.trim())
+          : null,
+      'meiNomeEmpresa': possuiMeiSelecionado == 'Sim'
+          ? meiNomeEmpresaController.text.trim()
+          : null,
       'latitude': 0.0,
       'longitude': 0.0,
     });
@@ -230,13 +320,15 @@ class RegisterEntregadorController extends ChangeNotifier {
     _cepDebounce?.cancel();
     pageController.dispose();
 
-    nomeController.dispose();
-    sobrenomeController.dispose();
+    nomeCompletoController.dispose();
     cpfController.dispose();
+    rgController.dispose();
     dataNascimentoController.dispose();
+    selfieController.dispose();
+    nomeMaeController.dispose();
 
-    emailController.dispose();
     telefoneController.dispose();
+    emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
 
@@ -246,6 +338,27 @@ class RegisterEntregadorController extends ChangeNotifier {
     cidadeController.dispose();
     estadoController.dispose();
     cepController.dispose();
+
+    cnhNumeroController.dispose();
+    cnhCategoriaController.dispose();
+    cnhValidadeController.dispose();
+    cnhFrenteController.dispose();
+    cnhVersoController.dispose();
+
+    marcaModeloController.dispose();
+    anoVeiculoController.dispose();
+    placaController.dispose();
+
+    bancoController.dispose();
+    agenciaController.dispose();
+    contaController.dispose();
+    chavePixController.dispose();
+    cpfTitularController.dispose();
+
+    regiaoAtuacaoController.dispose();
+    horariosDisponiveisController.dispose();
+    meiCnpjController.dispose();
+    meiNomeEmpresaController.dispose();
 
     super.dispose();
   }

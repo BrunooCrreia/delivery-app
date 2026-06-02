@@ -20,18 +20,21 @@ class Step1Conta extends StatelessWidget {
           children: [
             const RegisterSectionTitle(title: AppStrings.dadosPessoais),
             const SizedBox(height: 4),
-            const Text(AppStrings.etapa1de3),
+            const Text('Etapa 1 de 7'),
             const SizedBox(height: 20),
             RegisterField(
-              controller: controller.nomeController,
-              label: AppStrings.nome,
+              controller: controller.nomeCompletoController,
+              label: 'Nome completo',
               icon: Icons.person_outline,
-            ),
-            const SizedBox(height: 16),
-            RegisterField(
-              controller: controller.sobrenomeController,
-              label: AppStrings.sobrenome,
-              icon: Icons.person_outline,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Informe o nome completo';
+                }
+                if (value.trim().split(' ').length < 2) {
+                  return 'Informe nome e sobrenome';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             RegisterField(
@@ -51,6 +54,21 @@ class Step1Conta extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             RegisterField(
+              controller: controller.rgController,
+              label: 'RG',
+              icon: Icons.badge,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Informe o RG';
+                }
+                if (value.trim().length < 5) {
+                  return 'RG invalido';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            RegisterField(
               controller: controller.dataNascimentoController,
               label: AppStrings.dataNascimento,
               icon: Icons.cake_outlined,
@@ -65,6 +83,26 @@ class Step1Conta extends StatelessWidget {
                 if (digits.length != 8) return AppStrings.dataIncompleta;
                 return null;
               },
+            ),
+            const SizedBox(height: 16),
+            RegisterField(
+              controller: controller.selfieController,
+              label: 'Foto/Selfie (ID, URL ou referencia)',
+              icon: Icons.camera_alt_outlined,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Informe a selfie/documento de identificacao';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            RegisterField(
+              controller: controller.nomeMaeController,
+              label: 'Nome da mae (opcional)',
+              icon: Icons.family_restroom_outlined,
+              defaultErrorMessage: null,
+              validator: (_) => null,
             ),
             const SizedBox(height: 32),
             ElevatedButton(

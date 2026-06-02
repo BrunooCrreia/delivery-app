@@ -4,6 +4,10 @@ import 'package:projeto_perguntas/screens/register_entregador/register_entregado
 import 'package:projeto_perguntas/screens/register_entregador/steps/step1_conta.dart';
 import 'package:projeto_perguntas/screens/register_entregador/steps/step2_acesso.dart';
 import 'package:projeto_perguntas/screens/register_entregador/steps/step3_endereco.dart';
+import 'package:projeto_perguntas/screens/register_entregador/steps/step4_cnh.dart';
+import 'package:projeto_perguntas/screens/register_entregador/steps/step5_veiculo.dart';
+import 'package:projeto_perguntas/screens/register_entregador/steps/step6_bancario.dart';
+import 'package:projeto_perguntas/screens/register_entregador/steps/step7_operacional.dart';
 import 'package:projeto_perguntas/screens/widgets/register_progress_bar.dart';
 
 class RegisterEntregadorScreen extends StatefulWidget {
@@ -41,7 +45,7 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
               preferredSize: const Size.fromHeight(4),
               child: RegisterProgressBar(
                 currentPage: _controller.currentPage,
-                totalPages: 3,
+                totalPages: 7,
               ),
             ),
           ),
@@ -53,6 +57,10 @@ class _RegisterEntregadorScreenState extends State<RegisterEntregadorScreen> {
               Step1Conta(controller: _controller),
               Step2Acesso(controller: _controller),
               Step3Endereco(controller: _controller),
+              Step4Cnh(controller: _controller),
+              Step5Veiculo(controller: _controller),
+              Step6Bancario(controller: _controller),
+              Step7Operacional(controller: _controller),
             ],
           ),
         );
