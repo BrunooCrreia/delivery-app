@@ -6,6 +6,8 @@ class AuthStorage {
   SharedPreferences? _preferences;
 
   static const String _tokenKey = 'auth_token';
+  static const String _userNameKey = 'user_name';
+  static const String _userPhotoKey = 'user_photo';
 
   Future<SharedPreferences> _getPrefs() async {
     _preferences ??= await SharedPreferences.getInstance();
@@ -23,24 +25,40 @@ class AuthStorage {
     return token != null && token.isNotEmpty ? token : null;
   }
 
-  /// Checks if a token exists and is not empty
   Future<bool> hasToken() async {
     final token = await getToken();
     return token != null && token.isNotEmpty;
   }
 
-  /// Validates token format (basic check - must be non-empty string)
   Future<bool> isTokenValid() async {
     final token = await getToken();
     if (token == null || token.isEmpty) return false;
-
-    // Basic JWT format check: should have 3 parts separated by dots
     final parts = token.split('.');
-    return parts.length >= 2; // At least header.payload
+    return parts.length >= 2;
+  }
+
+  Future<void> saveUserData({required String nome, String? photoUrl}) async {
+    final prefs = await _getPrefs();
+    await prefs.setString(_userNameKey, nome);
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      await prefs.setString(_userPhotoKey, photoUrl);
+    }
+  }
+
+  Future<String?> getUserName() async {
+    final prefs = await _getPrefs();
+    return prefs.getString(_userNameKey);
+  }
+
+  Future<String?> getUserPhoto() async {
+    final prefs = await _getPrefs();
+    return prefs.getString(_userPhotoKey);
   }
 
   Future<void> logout() async {
     final prefs = await _getPrefs();
     await prefs.remove(_tokenKey);
+    await prefs.remove(_userNameKey);
+    await prefs.remove(_userPhotoKey);
   }
 }

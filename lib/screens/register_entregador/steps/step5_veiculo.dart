@@ -18,14 +18,14 @@ class Step5Veiculo extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const RegisterSectionTitle(title: 'Veiculo de trabalho'),
+            const RegisterSectionTitle(title: AppStrings.veiculoDeTrabalho),
             const SizedBox(height: 4),
-            const Text('Etapa 5 de 7'),
+            const Text(AppStrings.etapaEntregador5),
             const SizedBox(height: 20),
             DropdownButtonFormField<String>(
               value: controller.tipoVeiculoSelecionado,
               decoration: InputDecoration(
-                labelText: 'Tipo de veiculo',
+                labelText: AppStrings.tipoVeiculo,
                 prefixIcon: const Icon(Icons.two_wheeler_outlined),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -39,7 +39,7 @@ class Step5Veiculo extends StatelessWidget {
               onChanged: controller.setTipoVeiculo,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Selecione o tipo do veiculo';
+                  return AppStrings.selecioneVeiculoTipo;
                 }
                 return null;
               },
@@ -47,11 +47,11 @@ class Step5Veiculo extends StatelessWidget {
             const SizedBox(height: 16),
             RegisterField(
               controller: controller.marcaModeloController,
-              label: 'Marca e modelo',
+              label: AppStrings.marcaEModelo,
               icon: Icons.directions_car_outlined,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Informe a marca e modelo';
+                  return AppStrings.informeMarcaModelo;
                 }
                 return null;
               },
@@ -62,16 +62,16 @@ class Step5Veiculo extends StatelessWidget {
                 Expanded(
                   child: RegisterField(
                     controller: controller.anoVeiculoController,
-                    label: 'Ano',
+                    label: AppStrings.ano,
                     icon: Icons.calendar_today_outlined,
                     keyboardType: TextInputType.number,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Informe o ano';
+                        return AppStrings.informeAno;
                       }
                       final digits = value.replaceAll(RegExp(r'\D'), '');
                       if (digits.length != 4) {
-                        return 'Ano invalido';
+                        return AppStrings.anoInvalido;
                       }
                       return null;
                     },
@@ -81,16 +81,16 @@ class Step5Veiculo extends StatelessWidget {
                 Expanded(
                   child: RegisterField(
                     controller: controller.placaController,
-                    label: 'Placa',
+                    label: AppStrings.placa,
                     icon: Icons.pin_outlined,
                     textInputAction: TextInputAction.done,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Informe a placa';
+                        return AppStrings.informePlaca;
                       }
                       final cleaned = value.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
                       if (cleaned.length < 7) {
-                        return 'Placa invalida';
+                        return AppStrings.placaInvalida;
                       }
                       return null;
                     },

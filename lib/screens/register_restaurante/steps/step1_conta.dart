@@ -23,14 +23,8 @@ class Step1Conta extends StatelessWidget {
               useMedium: true,
             ),
             const SizedBox(height: 4),
-            const Text(AppStrings.etapa1de3),
+            const Text(AppStrings.etapa1de7),
             const SizedBox(height: 20),
-            RegisterField(
-              controller: controller.nomeController,
-              label: AppStrings.nomeRestaurante,
-              icon: Icons.storefront_outlined,
-            ),
-            const SizedBox(height: 16),
             RegisterField(
               controller: controller.emailController,
               label: AppStrings.email,
@@ -46,7 +40,6 @@ class Step1Conta extends StatelessWidget {
                 return null;
               },
             ),
-
             const SizedBox(height: 16),
             RegisterField(
               controller: controller.passwordController,
@@ -76,23 +69,6 @@ class Step1Conta extends StatelessWidget {
                 }
                 if (value != controller.passwordController.text) {
                   return AppStrings.senhasNaoConferem;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            RegisterField(
-              controller: controller.telefoneController,
-              label: AppStrings.telefone,
-              icon: Icons.phone_outlined,
-              keyboardType: TextInputType.phone,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return AppStrings.informeTelefone;
-                }
-                final digits = value.replaceAll(RegExp(r'\D'), '');
-                if (digits.length < 10 || digits.length > 11) {
-                  return AppStrings.telefoneInvalido;
                 }
                 return null;
               },

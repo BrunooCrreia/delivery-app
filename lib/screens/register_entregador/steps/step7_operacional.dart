@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:projeto_perguntas/core/resources/app_strings.dart';
 import 'package:projeto_perguntas/screens/register_entregador/register_entregador_controller.dart';
 import 'package:projeto_perguntas/screens/widgets/register_error.dart';
@@ -17,12 +16,8 @@ class Step7Operacional extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-
-      builder: (context) => const SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
-          child: SingleChildScrollView(child: TermosEntregadorTexto()),
-        ),
+      builder: (context) => _TermosBottomSheet(
+        onLeuTudo: () => controller.setLeuTermos(true),
       ),
     );
   }
@@ -36,20 +31,20 @@ class Step7Operacional extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const RegisterSectionTitle(title: 'Dados operacionais'),
+            const RegisterSectionTitle(title: AppStrings.dadosOperacional),
             const SizedBox(height: 4),
-            const Text('Etapa 7 de 7'),
+            const Text(AppStrings.etapaEntregador7),
             const SizedBox(height: 20),
             RegisterField(
               controller: controller.regiaoAtuacaoController,
-              label: 'Regiao de atuacao',
+              label: AppStrings.regiaoAtuacao,
               icon: Icons.public_outlined,
               textInputAction: TextInputAction.done,
             ),
             const SizedBox(height: 16),
             RegisterField(
               controller: controller.horariosDisponiveisController,
-              label: 'Horarios disponiveis',
+              label: AppStrings.horariosDisponiveis,
               icon: Icons.schedule_outlined,
               textInputAction: TextInputAction.done,
             ),
@@ -57,7 +52,7 @@ class Step7Operacional extends StatelessWidget {
             DropdownButtonFormField<String>(
               value: controller.possuiMeiSelecionado,
               decoration: InputDecoration(
-                labelText: 'Possui MEI?',
+                labelText: AppStrings.possuiMei,
                 prefixIcon: const Icon(Icons.business_center_outlined),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -75,22 +70,19 @@ class Step7Operacional extends StatelessWidget {
               const SizedBox(height: 16),
               RegisterField(
                 controller: controller.meiCnpjController,
-                label: 'CNPJ do MEI',
+                label: AppStrings.cnpjMei,
                 icon: Icons.badge_outlined,
                 keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(14),
-                ],
+                inputFormatters: [controller.cnpjMask],
                 validator: (value) {
                   if (controller.possuiMeiSelecionado != 'Sim') {
                     return null;
                   }
                   if (value == null || value.trim().isEmpty) {
-                    return 'Informe o CNPJ do MEI';
+                    return AppStrings.informeCnpjMei;
                   }
                   if (value.replaceAll(RegExp(r'\D'), '').length != 14) {
-                    return 'CNPJ invalido';
+                    return AppStrings.cnpjInvalido;
                   }
                   return null;
                 },
@@ -98,7 +90,7 @@ class Step7Operacional extends StatelessWidget {
               const SizedBox(height: 16),
               RegisterField(
                 controller: controller.meiNomeEmpresaController,
-                label: 'Nome empresarial do MEI',
+                label: AppStrings.nomeEmpresarialMei,
                 icon: Icons.business_outlined,
                 textInputAction: TextInputAction.done,
                 validator: (value) {
@@ -106,7 +98,7 @@ class Step7Operacional extends StatelessWidget {
                     return null;
                   }
                   if (value == null || value.trim().isEmpty) {
-                    return 'Informe o nome empresarial';
+                    return AppStrings.informeNomeEmpresarial;
                   }
                   return null;
                 },
@@ -116,7 +108,9 @@ class Step7Operacional extends StatelessWidget {
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               value: controller.aceitouTermos,
-              onChanged: (value) => controller.setAceitouTermos(value ?? false),
+              onChanged: controller.leuTermos
+                  ? (value) => controller.setAceitouTermos(value ?? false)
+                  : null,
               title: Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
@@ -130,6 +124,17 @@ class Step7Operacional extends StatelessWidget {
               ),
               controlAffinity: ListTileControlAffinity.leading,
             ),
+            if (!controller.leuTermos)
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 4),
+                child: Text(
+                  AppStrings.precisaLerTermos,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
             if (controller.errorMessage.isNotEmpty) ...[
               const SizedBox(height: 8),
               RegisterError(message: controller.errorMessage),
@@ -173,6 +178,82 @@ class Step7Operacional extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TermosBottomSheet extends StatefulWidget {
+  const _TermosBottomSheet({required this.onLeuTudo});
+
+  final VoidCallback onLeuTudo;
+
+  @override
+  State<_TermosBottomSheet> createState() => _TermosBottomSheetState();
+}
+
+class _TermosBottomSheetState extends State<_TermosBottomSheet> {
+  late final ScrollController _scrollController;
+  bool _chegouAoFinal = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_chegouAoFinal) return;
+    final pos = _scrollController.position;
+    if (pos.pixels >= pos.maxScrollExtent - 40) {
+      setState(() => _chegouAoFinal = true);
+      widget.onLeuTudo();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: const TermosEntregadorTexto(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _chegouAoFinal
+                    ? () => Navigator.of(context).pop()
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: Text(
+                  _chegouAoFinal
+                      ? AppStrings.confirmar
+                      : AppStrings.roleParaLerTudo,
+                ),
+              ),
             ),
           ],
         ),

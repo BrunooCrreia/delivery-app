@@ -8,7 +8,8 @@ class UserEntity {
   final String? cpfCnpj;
   final String? dataNascimento;
   final String? rg;
-  final String? nomeMae;
+  final String? nomeContatoEmergencia;
+  final String? telefoneEmergencia;
   final String? selfieDocumento;
 
   final String? endereco;
@@ -19,7 +20,6 @@ class UserEntity {
   final String? cep;
 
   final String? cnhNumero;
-  final String? cnhCategoria;
   final String? cnhValidade;
   final String? cnhFrente;
   final String? cnhVerso;
@@ -54,7 +54,8 @@ class UserEntity {
     this.cpfCnpj,
     this.dataNascimento,
     this.rg,
-    this.nomeMae,
+    this.nomeContatoEmergencia,
+    this.telefoneEmergencia,
     this.selfieDocumento,
     this.endereco,
     this.numero,
@@ -63,7 +64,6 @@ class UserEntity {
     this.estado,
     this.cep,
     this.cnhNumero,
-    this.cnhCategoria,
     this.cnhValidade,
     this.cnhFrente,
     this.cnhVerso,

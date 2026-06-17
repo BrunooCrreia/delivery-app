@@ -31,8 +31,10 @@ class VagaModel extends VagaEntity {
           ? (json['longitude'] as num).toDouble()
           : null,
       restaurante: json['restaurante'] != null
-          ? RestauranteModel.fromJson(json['restaurante'])
-          : null,
+          ? RestauranteModel.fromJson(json['restaurante'] as Map<String, dynamic>)
+          : (json['restauranteId'] != null
+              ? RestauranteModel.fromFlatJson(json)
+              : null),
     );
   }
 

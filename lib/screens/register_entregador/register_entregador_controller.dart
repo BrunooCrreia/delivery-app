@@ -1,14 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:projeto_perguntas/utils/input_formatters.dart';
 import 'package:projeto_perguntas/core/resources/app_strings.dart';
 import 'package:projeto_perguntas/core/routes/app_routes.dart';
+import 'package:projeto_perguntas/screens/widgets/register_address_step.dart';
 import 'package:projeto_perguntas/services/auth_service.dart';
 import 'package:projeto_perguntas/services/auth_storage.dart';
 import 'package:projeto_perguntas/services/cep_service.dart';
 
-class RegisterEntregadorController extends ChangeNotifier {
+class RegisterEntregadorController extends ChangeNotifier
+    implements IAddressStepController {
   RegisterEntregadorController({CepService? cepService})
     : _cepService = cepService ?? CepService();
 
@@ -17,20 +19,10 @@ class RegisterEntregadorController extends ChangeNotifier {
   final PageController pageController = PageController();
   int currentPage = 0;
 
-  final cpfMask = MaskTextInputFormatter(
-    mask: '###.###.###-##',
-    filter: {'#': RegExp(r'[0-9]')},
-  );
-
-  final dataMask = MaskTextInputFormatter(
-    mask: '##/##/####',
-    filter: {'#': RegExp(r'[0-9]')},
-  );
-
-  final telefoneMask = MaskTextInputFormatter(
-    mask: '(##) #####-####',
-    filter: {'#': RegExp(r'[0-9]')},
-  );
+  final cpfMask = AppFormatters.cpf();
+  final cnpjMask = AppFormatters.cnpj();
+  final dataMask = AppFormatters.data();
+  final telefoneMask = AppFormatters.telefone();
 
   final formKey1 = GlobalKey<FormState>();
   final nomeCompletoController = TextEditingController();
@@ -38,7 +30,8 @@ class RegisterEntregadorController extends ChangeNotifier {
   final rgController = TextEditingController();
   final dataNascimentoController = TextEditingController();
   final selfieController = TextEditingController();
-  final nomeMaeController = TextEditingController();
+  final nomeContatoEmergenciaController = TextEditingController();
+  final telefoneEmergenciaController = TextEditingController();
 
   final formKey2 = GlobalKey<FormState>();
   final telefoneController = TextEditingController();
@@ -47,16 +40,26 @@ class RegisterEntregadorController extends ChangeNotifier {
   final confirmPasswordController = TextEditingController();
 
   final formKey3 = GlobalKey<FormState>();
+  @override
+  GlobalKey<FormState> get addressFormKey => formKey3;
+
+  @override
   final enderecoController = TextEditingController();
+  @override
   final numeroController = TextEditingController();
+  @override
   final bairroController = TextEditingController();
+  @override
+  final complementoController = TextEditingController();
+  @override
   final cidadeController = TextEditingController();
+  @override
   final estadoController = TextEditingController();
+  @override
   final cepController = TextEditingController();
 
   final formKey4 = GlobalKey<FormState>();
   final cnhNumeroController = TextEditingController();
-  final cnhCategoriaController = TextEditingController();
   final cnhValidadeController = TextEditingController();
   final cnhFrenteController = TextEditingController();
   final cnhVersoController = TextEditingController();
@@ -85,16 +88,26 @@ class RegisterEntregadorController extends ChangeNotifier {
   String? tipoVeiculoSelecionado;
   String possuiMeiSelecionado = 'Nao';
 
+  bool leuTermos = false;
   bool aceitouTermos = false;
   bool isLoading = false;
+  @override
   bool isCepLoading = false;
+  @override
+  bool highlightNumeroField = false;
   String errorMessage = '';
   Timer? _cepDebounce;
   String _lastFetchedCep = '';
   int _cepRequestId = 0;
+  int _numeroBlinkRequestId = 0;
 
   void setCurrentPage(int page) {
     currentPage = page;
+    notifyListeners();
+  }
+
+  void setLeuTermos(bool value) {
+    leuTermos = value;
     notifyListeners();
   }
 
@@ -117,6 +130,20 @@ class RegisterEntregadorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> _blinkNumeroField() async {
+    final blinkId = ++_numeroBlinkRequestId;
+    for (var i = 0; i < 4; i++) {
+      if (blinkId != _numeroBlinkRequestId) return;
+      highlightNumeroField = i.isEven;
+      notifyListeners();
+      await Future<void>.delayed(const Duration(milliseconds: 170));
+    }
+    if (blinkId != _numeroBlinkRequestId) return;
+    highlightNumeroField = false;
+    notifyListeners();
+  }
+
+  @override
   void nextPage(GlobalKey<FormState> formKey) {
     if (!formKey.currentState!.validate()) {
       return;
@@ -131,6 +158,7 @@ class RegisterEntregadorController extends ChangeNotifier {
     );
   }
 
+  @override
   void prevPage() {
     pageController.previousPage(
       duration: const Duration(milliseconds: 300),
@@ -155,12 +183,13 @@ class RegisterEntregadorController extends ChangeNotifier {
   }
 
   bool _isInvalidCepPayload(Map<String, dynamic> data) {
-    return _isNullOrEmpty(data['street']) &&
-        _isNullOrEmpty(data['neighborhood']) &&
-        _isNullOrEmpty(data['city']) &&
-        _isNullOrEmpty(data['state']);
+    return _isNullOrEmpty(data['logradouro']) &&
+        _isNullOrEmpty(data['bairro']) &&
+        _isNullOrEmpty(data['localidade']) &&
+        _isNullOrEmpty(data['uf']);
   }
 
+  @override
   void onCepChanged(String value, BuildContext context) {
     final cep = _digitsOnly(value);
 
@@ -198,31 +227,32 @@ class RegisterEntregadorController extends ChangeNotifier {
       if (_isInvalidCepPayload(data)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('CEP invalido. Verifique e tente novamente.'),
+            content: Text(AppStrings.cepInvalido),
           ),
         );
         _lastFetchedCep = '';
         return;
       }
 
-      enderecoController.text = (data['street'] as String? ?? '').trim();
-      bairroController.text = (data['neighborhood'] as String? ?? '').trim();
-      cidadeController.text = (data['city'] as String? ?? '').trim();
-      estadoController.text = (data['state'] as String? ?? '').trim();
+      enderecoController.text = (data['logradouro'] as String? ?? '').trim();
+      bairroController.text = (data['bairro'] as String? ?? '').trim();
+      cidadeController.text = (data['localidade'] as String? ?? '').trim();
+      estadoController.text = (data['uf'] as String? ?? '').trim();
 
-      final zipCode = (data['zipCode'] as String? ?? '').trim();
-      if (zipCode.isNotEmpty) {
-        cepController.text = zipCode;
+      final cepFormatado = (data['cep'] as String? ?? '').trim();
+      if (cepFormatado.isNotEmpty) {
+        cepController.text = cepFormatado;
       }
 
       _lastFetchedCep = cep;
+      unawaited(_blinkNumeroField());
       notifyListeners();
     } catch (_) {
       if (requestId != _cepRequestId) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Nao foi possivel buscar o endereco pelo CEP.'),
+          content: Text(AppStrings.erroBuscarCep),
         ),
       );
     } finally {
@@ -237,7 +267,7 @@ class RegisterEntregadorController extends ChangeNotifier {
     if (!formKey7.currentState!.validate()) return;
 
     if (tipoVeiculoSelecionado == null || tipoVeiculoSelecionado!.isEmpty) {
-      errorMessage = 'Selecione o tipo do veiculo.';
+      errorMessage = AppStrings.selecioneVeiculoTipo;
       notifyListeners();
       return;
     }
@@ -262,9 +292,12 @@ class RegisterEntregadorController extends ChangeNotifier {
       'cpfCnpj': cpfController.text.trim(),
       'dataNascimento': _formatBirthDateForApi(dataNascimentoController.text),
       'rg': rgController.text.trim(),
-      'nomeMae': nomeMaeController.text.trim().isEmpty
+      'nomeContatoEmergencia': nomeContatoEmergenciaController.text.trim().isEmpty
           ? null
-          : nomeMaeController.text.trim(),
+          : nomeContatoEmergenciaController.text.trim(),
+      'telefoneEmergencia': telefoneEmergenciaController.text.trim().isEmpty
+          ? null
+          : telefoneEmergenciaController.text.trim(),
       'selfieDocumento': selfieController.text.trim(),
       'endereco': enderecoController.text.trim(),
       'numero': numeroController.text.trim(),
@@ -273,7 +306,6 @@ class RegisterEntregadorController extends ChangeNotifier {
       'estado': estadoController.text.trim(),
       'cep': cepController.text.trim(),
       'cnhNumero': cnhNumeroController.text.trim(),
-      'cnhCategoria': cnhCategoriaController.text.trim(),
       'cnhValidade': _formatBirthDateForApi(cnhValidadeController.text),
       'cnhFrente': cnhFrenteController.text.trim(),
       'cnhVerso': cnhVersoController.text.trim(),
@@ -325,7 +357,8 @@ class RegisterEntregadorController extends ChangeNotifier {
     rgController.dispose();
     dataNascimentoController.dispose();
     selfieController.dispose();
-    nomeMaeController.dispose();
+    nomeContatoEmergenciaController.dispose();
+    telefoneEmergenciaController.dispose();
 
     telefoneController.dispose();
     emailController.dispose();
@@ -335,12 +368,12 @@ class RegisterEntregadorController extends ChangeNotifier {
     enderecoController.dispose();
     numeroController.dispose();
     bairroController.dispose();
+    complementoController.dispose();
     cidadeController.dispose();
     estadoController.dispose();
     cepController.dispose();
 
     cnhNumeroController.dispose();
-    cnhCategoriaController.dispose();
     cnhValidadeController.dispose();
     cnhFrenteController.dispose();
     cnhVersoController.dispose();

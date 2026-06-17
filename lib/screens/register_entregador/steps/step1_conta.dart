@@ -20,18 +20,18 @@ class Step1Conta extends StatelessWidget {
           children: [
             const RegisterSectionTitle(title: AppStrings.dadosPessoais),
             const SizedBox(height: 4),
-            const Text('Etapa 1 de 7'),
+            const Text(AppStrings.etapaEntregador1),
             const SizedBox(height: 20),
             RegisterField(
               controller: controller.nomeCompletoController,
-              label: 'Nome completo',
+              label: AppStrings.nomeCompleto,
               icon: Icons.person_outline,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Informe o nome completo';
+                  return AppStrings.informeNomeCompleto;
                 }
                 if (value.trim().split(' ').length < 2) {
-                  return 'Informe nome e sobrenome';
+                  return AppStrings.informeNomeSobrenome;
                 }
                 return null;
               },
@@ -55,14 +55,14 @@ class Step1Conta extends StatelessWidget {
             const SizedBox(height: 16),
             RegisterField(
               controller: controller.rgController,
-              label: 'RG',
+              label: AppStrings.rg,
               icon: Icons.badge,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Informe o RG';
+                  return AppStrings.informeRg;
                 }
                 if (value.trim().length < 5) {
-                  return 'RG invalido';
+                  return AppStrings.rgInvalido;
                 }
                 return null;
               },
@@ -87,20 +87,30 @@ class Step1Conta extends StatelessWidget {
             const SizedBox(height: 16),
             RegisterField(
               controller: controller.selfieController,
-              label: 'Foto/Selfie (ID, URL ou referencia)',
+              label: AppStrings.selfieDoc,
               icon: Icons.camera_alt_outlined,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Informe a selfie/documento de identificacao';
+                  return AppStrings.informeSelfie;
                 }
                 return null;
               },
             ),
             const SizedBox(height: 16),
             RegisterField(
-              controller: controller.nomeMaeController,
-              label: 'Nome da mae (opcional)',
+              controller: controller.nomeContatoEmergenciaController,
+              label: AppStrings.nomeMae,
               icon: Icons.family_restroom_outlined,
+              defaultErrorMessage: null,
+              validator: (_) => null,
+            ),
+            const SizedBox(height: 16),
+            RegisterField(
+              controller: controller.telefoneEmergenciaController,
+              label: AppStrings.telefoneEmergencia,
+              icon: Icons.phone_outlined,
+              keyboardType: TextInputType.phone,
+              inputFormatters: [controller.telefoneMask],
               defaultErrorMessage: null,
               validator: (_) => null,
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:projeto_perguntas/core/resources/app_strings.dart';
 import 'package:projeto_perguntas/services/auth_service.dart';
 import 'package:projeto_perguntas/services/auth_storage.dart';
 import 'package:projeto_perguntas/core/routes/app_routes.dart';
@@ -70,12 +71,22 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (result.success && result.token != null) {
-      await AuthStorage().saveToken(result.token!);
+      final storage = AuthStorage();
+      await storage.saveToken(result.token!);
+      final user = result.user;
+      if (user != null) {
+        final nome = (user['nome'] ?? user['user']?['nome'] ?? '') as String;
+        final photo = (user['selfieDocumento'] ??
+            user['user']?['selfieDocumento']) as String?;
+        if (nome.isNotEmpty) {
+          await storage.saveUserData(nome: nome, photoUrl: photo);
+        }
+      }
       await _saveCredentials(email, password);
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bem-vindo! Autenticacao realizada.')),
+        const SnackBar(content: Text(AppStrings.bemVindo)),
       );
 
       Navigator.of(context).pushReplacementNamed(AppRoutes.home);
@@ -137,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           const _LoginHeader(),
                           const SizedBox(height: 16),
                           const Text(
-                            'Acesse sua conta de motoboy e gerencie entregas com rapidez',
+                            AppStrings.subtituloLogin,
                             textAlign: TextAlign.center,
                           ),
                           if (_errorMessage.isNotEmpty) ...[
@@ -154,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   keyboardType: TextInputType.emailAddress,
                                   textInputAction: TextInputAction.next,
                                   decoration: InputDecoration(
-                                    labelText: 'E-mail',
+                                    labelText: AppStrings.email,
                                     labelStyle: labelStyle,
                                     prefixIcon: const Icon(
                                       Icons.person_outline,
@@ -165,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   validator: (value) {
                                     if (value == null || value.trim().isEmpty) {
-                                      return 'Informe e-mail ou telefone';
+                                      return AppStrings.informeEmailOuTelefone;
                                     }
                                     return null;
                                   },
@@ -176,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   obscureText: true,
                                   textInputAction: TextInputAction.done,
                                   decoration: InputDecoration(
-                                    labelText: 'Senha',
+                                    labelText: AppStrings.senha,
                                     labelStyle: labelStyle,
                                     prefixIcon: const Icon(Icons.lock_outline),
                                     border: OutlineInputBorder(
@@ -185,10 +196,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return 'Informe sua senha';
+                                      return AppStrings.informeSuaSenha;
                                     }
                                     if (value.length < 6) {
-                                      return 'A senha deve ter ao menos 6 caracteres';
+                                      return AppStrings.senhaMinCaracteres;
                                     }
                                     return null;
                                   },
@@ -204,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         });
                                       },
                                     ),
-                                    const Text('Lembrar senha'),
+                                    const Text(AppStrings.lembrarSenha),
                                     const Spacer(),
                                     TextButton(
                                       onPressed: () {
@@ -213,12 +224,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ).showSnackBar(
                                           const SnackBar(
                                             content: Text(
-                                              'Link de recuperacao ainda nao implementado.',
+                                              AppStrings.recuperacaoNaoImplementado,
                                             ),
                                           ),
                                         );
                                       },
-                                      child: const Text('Esqueci minha senha'),
+                                      child: const Text(AppStrings.esqueciSenha),
                                     ),
                                   ],
                                 ),
@@ -228,6 +239,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: ElevatedButton(
                                     onPressed: _isLoading ? null : _handleLogin,
                                     style: ElevatedButton.styleFrom(
+                                      backgroundColor: theme.colorScheme.primary,
+                                      foregroundColor: theme.colorScheme.onPrimary,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(18),
                                       ),
@@ -244,20 +257,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                               strokeWidth: 2.5,
                                             ),
                                           )
-                                        : const Text('Entrar'),
+                                        : const Text(AppStrings.entrar),
                                   ),
                                 ),
                                 const SizedBox(height: 18),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Text('Nao tem conta?'),
+                                    const Text(AppStrings.naoTemConta),
                                     TextButton(
                                       onPressed: () =>
                                           Navigator.of(context).pushNamed(
                                             AppRoutes.registerType,
-                                          ), // ✅ navega para seleção de tipo
-                                      child: const Text('Criar conta'),
+                                          ),
+                                      child: const Text(AppStrings.criarConta),
                                     ),
                                   ],
                                 ),
@@ -299,7 +312,7 @@ class _LoginHeader extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         Text(
-          'TransDelivery',
+          AppStrings.appNomeDisplay,
           style: Theme.of(
             context,
           ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),

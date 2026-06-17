@@ -47,6 +47,14 @@ class RestauranteModel extends RestauranteEntity {
     );
   }
 
+  factory RestauranteModel.fromFlatJson(Map<String, dynamic> json) {
+    return RestauranteModel(
+      id: json['restauranteId'],
+      nome: json['restauranteNome'] ?? '',
+      endereco: '',
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

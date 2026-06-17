@@ -18,34 +18,21 @@ class Step4Cnh extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const RegisterSectionTitle(title: 'CNH e seguranca'),
+            const RegisterSectionTitle(title: AppStrings.cnhESeguranca),
             const SizedBox(height: 4),
-            const Text('Etapa 4 de 7'),
+            const Text(AppStrings.etapaEntregador4),
             const SizedBox(height: 20),
             RegisterField(
               controller: controller.cnhNumeroController,
-              label: 'Numero da CNH',
+              label: AppStrings.cnhNumero,
               icon: Icons.badge_outlined,
               keyboardType: TextInputType.number,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Informe o numero da CNH';
+                  return AppStrings.informeCnhNumero;
                 }
                 if (value.replaceAll(RegExp(r'\D'), '').length < 9) {
-                  return 'Numero de CNH invalido';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            RegisterField(
-              controller: controller.cnhCategoriaController,
-              label: 'Categoria da CNH',
-              icon: Icons.category_outlined,
-              textInputAction: TextInputAction.done,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Informe a categoria da CNH';
+                  return AppStrings.cnhNumeroInvalido;
                 }
                 return null;
               },
@@ -53,13 +40,13 @@ class Step4Cnh extends StatelessWidget {
             const SizedBox(height: 16),
             RegisterField(
               controller: controller.cnhValidadeController,
-              label: 'Validade da CNH',
+              label: AppStrings.cnhValidade,
               icon: Icons.event_outlined,
               keyboardType: TextInputType.number,
               inputFormatters: [controller.dataMask],
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Informe a validade da CNH';
+                  return AppStrings.informeCnhValidade;
                 }
                 final digits = value.replaceAll(RegExp(r'\D'), '');
                 if (digits.length != 8) {
@@ -71,11 +58,11 @@ class Step4Cnh extends StatelessWidget {
             const SizedBox(height: 16),
             RegisterField(
               controller: controller.cnhFrenteController,
-              label: 'CNH frente (ID, URL ou referencia)',
+              label: AppStrings.cnhFrente,
               icon: Icons.photo_outlined,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Informe a foto da frente da CNH';
+                  return AppStrings.informeCnhFrente;
                 }
                 return null;
               },
@@ -83,12 +70,12 @@ class Step4Cnh extends StatelessWidget {
             const SizedBox(height: 16),
             RegisterField(
               controller: controller.cnhVersoController,
-              label: 'CNH verso (ID, URL ou referencia)',
+              label: AppStrings.cnhVerso,
               icon: Icons.photo_library_outlined,
               textInputAction: TextInputAction.done,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Informe a foto do verso da CNH';
+                  return AppStrings.informeCnhVerso;
                 }
                 return null;
               },

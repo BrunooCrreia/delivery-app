@@ -18,9 +18,9 @@ class Step2Acesso extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const RegisterSectionTitle(title: 'Contato e acesso'),
+            const RegisterSectionTitle(title: AppStrings.contatoEAcesso),
             const SizedBox(height: 4),
-            const Text('Etapa 2 de 7'),
+            const Text(AppStrings.etapaEntregador2),
             const SizedBox(height: 20),
             RegisterField(
               controller: controller.telefoneController,

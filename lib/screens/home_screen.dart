@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -9,7 +10,9 @@ import '../services/vagas_service.dart';
 import '../utils/http_client.dart';
 import '../utils/map_tile_provider.dart';
 import '../core/entities/vagas_entity.dart';
+import 'package:projeto_perguntas/core/resources/app_strings.dart';
 import 'package:projeto_perguntas/core/routes/app_routes.dart';
+import 'package:projeto_perguntas/core/theme/theme_notifier.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,25 +31,11 @@ class _HomeScreenState extends State<HomeScreen> {
     _SettingsTab(),
   ];
 
-  Future<void> _handleLogout(BuildContext context) async {
-    await AuthStorage().logout();
-    if (context.mounted) {
-      Navigator.of(context).pushReplacementNamed(AppRoutes.login);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Trans Delivery'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => _handleLogout(context),
-            tooltip: 'Sair',
-          ),
-        ],
+        title: const Text(AppStrings.appNome),
       ),
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: BottomNavigationBar(
@@ -57,22 +46,22 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home),
-            label: 'Home',
+            label: AppStrings.tabHome,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.location_on_outlined),
             activeIcon: Icon(Icons.location_on),
-            label: 'Vagas',
+            label: AppStrings.tabVagas,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today_outlined),
             activeIcon: Icon(Icons.calendar_today),
-            label: 'Agendamentos',
+            label: AppStrings.tabAgendamentos,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
             activeIcon: Icon(Icons.settings),
-            label: 'Settings',
+            label: AppStrings.tabSettings,
           ),
         ],
       ),
@@ -98,11 +87,16 @@ class _HomeTabState extends State<_HomeTab> {
   late final MapController _mapController;
   StreamSubscription<Position>? _positionSub;
 
+  final VagasService _vagasService = VagasService();
+  List<VagaEntity> _vagas = [];
+  bool _isRefreshing = false;
+
   @override
   void initState() {
     super.initState();
     _mapController = MapController();
     _initLocation();
+    _loadVagas();
   }
 
   @override
@@ -110,6 +104,20 @@ class _HomeTabState extends State<_HomeTab> {
     _positionSub?.cancel();
     _mapController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadVagas() async {
+    if (!mounted) return;
+    setState(() => _isRefreshing = true);
+    try {
+      final vagas = await _vagasService.getVagas();
+      if (!mounted) return;
+      setState(() => _vagas = vagas);
+    } catch (_) {
+      // mapa continua funcional sem as vagas
+    } finally {
+      if (mounted) setState(() => _isRefreshing = false);
+    }
   }
 
   Future<void> _initLocation() async {
@@ -159,6 +167,73 @@ class _HomeTabState extends State<_HomeTab> {
     }
   }
 
+  void _showVagaSheet(BuildContext context, VagaEntity vaga) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              vaga.descricao,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            if (vaga.restaurante != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                vaga.restaurante!.nome,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+              ),
+            ],
+            const SizedBox(height: 16),
+            _SheetRow(icon: Icons.attach_money, text: 'R\$ ${vaga.valor.toStringAsFixed(2)}'),
+            const SizedBox(height: 8),
+            _SheetRow(
+              icon: Icons.calendar_today_outlined,
+              text:
+                  '${vaga.data.day.toString().padLeft(2, '0')}/${vaga.data.month.toString().padLeft(2, '0')}/${vaga.data.year}',
+            ),
+            const SizedBox(height: 8),
+            _SheetRow(
+              icon: Icons.schedule_outlined,
+              text: '${vaga.horaInicio.substring(0, 5)} – ${vaga.horaFim.substring(0, 5)}',
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(AppStrings.verDetalhes),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_locationLoading) {
@@ -192,6 +267,23 @@ class _HomeTabState extends State<_HomeTab> {
                   ),
                 ],
               ),
+            if (_disponivel)
+              MarkerLayer(
+                markers: _vagas
+                    .where((v) => v.latitude != null && v.longitude != null)
+                    .map(
+                      (v) => Marker(
+                        point: LatLng(v.latitude!, v.longitude!),
+                        width: 44,
+                        height: 52,
+                        child: _VagaPin(
+                          vaga: v,
+                          onTap: () => _showVagaSheet(context, v),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
           ],
         ),
         Positioned(
@@ -205,14 +297,34 @@ class _HomeTabState extends State<_HomeTab> {
         ),
         Positioned(
           right: 16,
-          bottom: 148,
-          child: FloatingActionButton.small(
-            heroTag: 'recenter',
-            onPressed: _centerOnUser,
-            backgroundColor: Colors.white,
-            foregroundColor: Theme.of(context).colorScheme.primary,
-            elevation: 4,
-            child: const Icon(Icons.my_location),
+          bottom: 188,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FloatingActionButton.small(
+                heroTag: 'refresh',
+                onPressed: _isRefreshing ? null : _loadVagas,
+                backgroundColor: Colors.white,
+                foregroundColor: Theme.of(context).colorScheme.primary,
+                elevation: 4,
+                child: _isRefreshing
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+              ),
+              const SizedBox(height: 10),
+              FloatingActionButton.small(
+                heroTag: 'recenter',
+                onPressed: _centerOnUser,
+                backgroundColor: Colors.white,
+                foregroundColor: Theme.of(context).colorScheme.primary,
+                elevation: 4,
+                child: const Icon(Icons.my_location),
+              ),
+            ],
           ),
         ),
         Positioned(
@@ -250,7 +362,7 @@ class _LocationLoadingScreen extends StatelessWidget {
             const CircularProgressIndicator(),
             const SizedBox(height: 16),
             Text(
-              'Obtendo sua localização...',
+              AppStrings.obtendoLocalizacao,
               style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
             ),
           ],
@@ -382,7 +494,7 @@ class _TopStatusBar extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  disponivel ? 'Disponível' : 'Indisponível',
+                  disponivel ? AppStrings.disponivel : AppStrings.indisponivel,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
@@ -421,15 +533,16 @@ class _BottomStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -445,18 +558,21 @@ class _BottomStatusCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      disponivel ? 'Você está disponível' : 'Você está indisponível',
-                      style: const TextStyle(
+                      disponivel
+                          ? AppStrings.voceEstaDisponivel
+                          : AppStrings.voceEstaIndisponivel,
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       disponivel
-                          ? 'Aguardando novas solicitações'
-                          : 'Ative para receber solicitações',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                          ? AppStrings.aguardandoSolicitacoes
+                          : AppStrings.ativeParaReceberSolicitacoes,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -475,8 +591,10 @@ class _BottomStatusCard extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: onVagasTap,
               icon: const Icon(Icons.work_outline),
-              label: const Text('Ver vagas disponíveis'),
+              label: const Text(AppStrings.verVagasDisponiveis),
               style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -554,13 +672,13 @@ class _VagasTabState extends State<_VagasTab> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Vagas disponíveis',
+                AppStrings.vagasDisponiveis,
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               IconButton(
                 icon: const Icon(Icons.refresh),
                 onPressed: _loadVagas,
-                tooltip: 'Atualizar',
+                tooltip: AppStrings.atualizar,
               ),
             ],
           ),
@@ -581,7 +699,7 @@ class _VagasTabState extends State<_VagasTab> {
               ),
             )
           else if (_vagas.isEmpty)
-            const Center(child: Text('Nenhuma vaga disponível no momento.'))
+            const Center(child: Text(AppStrings.nenhumaVagaDisponivel))
           else
             Expanded(
               child: ListView.builder(
@@ -605,22 +723,246 @@ class _AgendamentosTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('Agendamentos — em breve'));
+    return const Center(child: Text(AppStrings.agendamentosEmBreve));
   }
 }
 
 // ─── Settings Tab ─────────────────────────────────────────────────────────────
 
-class _SettingsTab extends StatelessWidget {
+class _SettingsTab extends StatefulWidget {
   const _SettingsTab();
 
   @override
+  State<_SettingsTab> createState() => _SettingsTabState();
+}
+
+class _SettingsTabState extends State<_SettingsTab> {
+  String? _nome;
+  String? _photoUrl;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final storage = AuthStorage();
+    final nome = await storage.getUserName();
+    final photo = await storage.getUserPhoto();
+    if (mounted) {
+      setState(() {
+        _nome = nome;
+        _photoUrl = photo;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _handleLogout() async {
+    await AuthStorage().logout();
+    if (mounted) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+    }
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name.isNotEmpty ? name[0].toUpperCase() : '?';
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('Settings — em breve'));
+    final theme = Theme.of(context);
+    final themeNotifier = ThemeNotifierProvider.of(context);
+
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final nome = _nome ?? AppStrings.settingsSemNome;
+    final isUrl = _photoUrl != null &&
+        (_photoUrl!.startsWith('http://') || _photoUrl!.startsWith('https://'));
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ── Perfil ──
+          Center(
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 48,
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  backgroundImage: isUrl ? NetworkImage(_photoUrl!) : null,
+                  child: isUrl
+                      ? null
+                      : Text(
+                          _initials(nome),
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            color: theme.colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  nome,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 36),
+          Divider(color: theme.colorScheme.outlineVariant),
+          const SizedBox(height: 8),
+
+          // ── Aparência ──
+          Text(
+            AppStrings.settingsAparencia,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          ListenableBuilder(
+            listenable: themeNotifier,
+            builder: (context, _) => SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              secondary: Icon(
+                themeNotifier.isDark
+                    ? Icons.dark_mode_outlined
+                    : Icons.light_mode_outlined,
+              ),
+              title: Text(
+                themeNotifier.isDark
+                    ? AppStrings.settingsModoDark
+                    : AppStrings.settingsModoClaro,
+              ),
+              value: themeNotifier.isDark,
+              onChanged: (_) => themeNotifier.toggle(),
+            ),
+          ),
+
+          const SizedBox(height: 8),
+          Divider(color: theme.colorScheme.outlineVariant),
+          const SizedBox(height: 24),
+
+          // ── Sair ──
+          SizedBox(
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: _handleLogout,
+              icon: const Icon(Icons.logout),
+              label: const Text(AppStrings.sair),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.errorContainer,
+                foregroundColor: theme.colorScheme.onErrorContainer,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
 // ─── Componentes compartilhados ───────────────────────────────────────────────
+
+// ─── Pin de vaga no mapa ──────────────────────────────────────────────────────
+
+class _VagaPin extends StatelessWidget {
+  const _VagaPin({required this.vaga, required this.onTap});
+
+  final VagaEntity vaga;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.orange.shade700,
+              shape: BoxShape.circle,
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.work_outline, color: Colors.white, size: 18),
+          ),
+          CustomPaint(
+            painter: _TrianglePainter(Colors.orange.shade700),
+            size: const Size(10, 6),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrianglePainter extends CustomPainter {
+  const _TrianglePainter(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = ui.Paint()..color = color;
+    final path = ui.Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width / 2, size.height)
+      ..lineTo(size.width, 0)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(_TrianglePainter old) => old.color != color;
+}
+
+// ─── Linha do bottom sheet ────────────────────────────────────────────────────
+
+class _SheetRow extends StatelessWidget {
+  const _SheetRow({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Colors.grey.shade600),
+        const SizedBox(width: 8),
+        Text(text, style: const TextStyle(fontSize: 14)),
+      ],
+    );
+  }
+}
+
+// ─── Item de vaga na lista ────────────────────────────────────────────────────
 
 class _VagaItem extends StatelessWidget {
   final VagaEntity vaga;

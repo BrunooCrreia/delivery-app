@@ -4,8 +4,8 @@ import 'package:projeto_perguntas/screens/register_restaurante/register_restaura
 import 'package:projeto_perguntas/screens/widgets/register_field.dart';
 import 'package:projeto_perguntas/screens/widgets/register_section_title.dart';
 
-class Step2Restaurante extends StatelessWidget {
-  const Step2Restaurante({super.key, required this.controller});
+class Step3Responsavel extends StatelessWidget {
+  const Step3Responsavel({super.key, required this.controller});
 
   final RegisterRestauranteController controller;
 
@@ -14,77 +14,59 @@ class Step2Restaurante extends StatelessWidget {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Form(
-        key: controller.formKey2,
+        key: controller.formKey3,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const RegisterSectionTitle(
-              title: AppStrings.dadosEstabelecimento,
+              title: AppStrings.dadosResponsavel,
               useMedium: true,
             ),
             const SizedBox(height: 4),
-            const Text(AppStrings.etapa2de7),
+            const Text(AppStrings.etapa3de7),
             const SizedBox(height: 20),
             RegisterField(
-              controller: controller.razaoSocialController,
-              label: AppStrings.razaoSocial,
-              icon: Icons.business_outlined,
+              controller: controller.nomeResponsavelController,
+              label: AppStrings.nomeResponsavel,
+              icon: Icons.person_outline,
             ),
             const SizedBox(height: 16),
             RegisterField(
-              controller: controller.cnpjController,
-              label: AppStrings.cnpj,
+              controller: controller.cpfResponsavelController,
+              label: AppStrings.cpfResponsavel,
               icon: Icons.badge_outlined,
               keyboardType: TextInputType.number,
-              inputFormatters: [controller.cnpjMask],
+              inputFormatters: [controller.cpfResponsavelMask],
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return AppStrings.informeCnpj;
+                  return AppStrings.obrigatorio;
                 }
-                if (value.replaceAll(RegExp(r'\D'), '').length != 14) {
-                  return AppStrings.cnpjInvalido;
+                if (value.replaceAll(RegExp(r'\D'), '').length != 11) {
+                  return AppStrings.cpfResponsavelInvalido;
                 }
                 return null;
               },
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              initialValue: controller.tipoNegocioSelecionado,
+              initialValue: controller.cargoSelecionado,
               decoration: InputDecoration(
-                labelText: AppStrings.tipoNegocio,
-                prefixIcon: const Icon(Icons.category_outlined),
+                labelText: AppStrings.cargoResponsavel,
+                prefixIcon: const Icon(Icons.work_outline),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              items: controller.tiposNegocio
+              items: controller.cargos
                   .map(
-                    (tipo) => DropdownMenuItem(value: tipo, child: Text(tipo)),
+                    (cargo) =>
+                        DropdownMenuItem(value: cargo, child: Text(cargo)),
                   )
                   .toList(),
-              onChanged: controller.setTipoNegocio,
-              validator: (_) => controller.tipoNegocioSelecionado == null
-                  ? AppStrings.informeTipoNegocio
+              onChanged: controller.setCargo,
+              validator: (_) => controller.cargoSelecionado == null
+                  ? AppStrings.informeCargo
                   : null,
-            ),
-            const SizedBox(height: 16),
-            RegisterField(
-              controller: controller.telefoneController,
-              label: AppStrings.telefone,
-              icon: Icons.phone_outlined,
-              keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.done,
-              inputFormatters: [controller.telefoneMask],
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return AppStrings.informeTelefone;
-                }
-                final digits = value.replaceAll(RegExp(r'\D'), '');
-                if (digits.length < 10 || digits.length > 11) {
-                  return AppStrings.telefoneInvalido;
-                }
-                return null;
-              },
             ),
             const SizedBox(height: 32),
             Row(
@@ -104,7 +86,7 @@ class Step2Restaurante extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => controller.nextPage(controller.formKey2),
+                    onPressed: () => controller.nextPage(controller.formKey3),
                     style: ElevatedButton.styleFrom(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18),

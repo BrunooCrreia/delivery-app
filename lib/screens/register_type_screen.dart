@@ -9,7 +9,7 @@ class RegisterTypeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Criar conta')),
+      appBar: AppBar(title: const Text(app_strings.AppStrings.criarConta)),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -32,7 +32,7 @@ class RegisterTypeScreen extends StatelessWidget {
             _TypeCard(
               icon: Icons.delivery_dining,
               title: app_strings.AppStrings.tipocontaEntregador,
-              description: 'Quero me candidatar a vagas de entrega.',
+              description: app_strings.AppStrings.descricaoEntregador,
               onTap: () =>
                   Navigator.of(context).pushNamed(AppRoutes.registerMotoboy),
             ),
@@ -40,7 +40,7 @@ class RegisterTypeScreen extends StatelessWidget {
             _TypeCard(
               icon: Icons.storefront_outlined,
               title: app_strings.AppStrings.tipocontaRestaurante,
-              description: 'Quero cadastrar meu restaurante e publicar vagas.',
+              description: app_strings.AppStrings.descricaoRestaurante,
               onTap: () => Navigator.of(
                 context,
               ).pushNamed(AppRoutes.registerRestaurante),

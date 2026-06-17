@@ -18,13 +18,13 @@ class Step6Bancario extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const RegisterSectionTitle(title: 'Dados bancarios'),
+            const RegisterSectionTitle(title: AppStrings.dadosBancarios),
             const SizedBox(height: 4),
-            const Text('Etapa 6 de 7'),
+            const Text(AppStrings.etapaEntregador6),
             const SizedBox(height: 20),
             RegisterField(
               controller: controller.bancoController,
-              label: 'Banco',
+              label: AppStrings.banco,
               icon: Icons.account_balance_outlined,
             ),
             const SizedBox(height: 16),
@@ -33,7 +33,7 @@ class Step6Bancario extends StatelessWidget {
                 Expanded(
                   child: RegisterField(
                     controller: controller.agenciaController,
-                    label: 'Agencia',
+                    label: AppStrings.agencia,
                     icon: Icons.account_tree_outlined,
                     keyboardType: TextInputType.number,
                   ),
@@ -42,7 +42,7 @@ class Step6Bancario extends StatelessWidget {
                 Expanded(
                   child: RegisterField(
                     controller: controller.contaController,
-                    label: 'Conta',
+                    label: AppStrings.conta,
                     icon: Icons.confirmation_number_outlined,
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.done,
@@ -53,20 +53,20 @@ class Step6Bancario extends StatelessWidget {
             const SizedBox(height: 16),
             RegisterField(
               controller: controller.chavePixController,
-              label: 'Chave PIX',
+              label: AppStrings.chavePix,
               icon: Icons.pix_outlined,
             ),
             const SizedBox(height: 16),
             RegisterField(
               controller: controller.cpfTitularController,
-              label: 'CPF do titular da conta',
+              label: AppStrings.cpfTitularConta,
               icon: Icons.badge_outlined,
               keyboardType: TextInputType.number,
               inputFormatters: [controller.cpfMask],
               textInputAction: TextInputAction.done,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Informe o CPF do titular';
+                  return AppStrings.informeCpfTitular;
                 }
                 final digits = value.replaceAll(RegExp(r'\D'), '');
                 if (digits.length != 11) {

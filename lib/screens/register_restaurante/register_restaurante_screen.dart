@@ -3,7 +3,9 @@ import 'package:projeto_perguntas/core/resources/app_strings.dart';
 import 'package:projeto_perguntas/screens/register_restaurante/register_restaurante_controller.dart';
 import 'package:projeto_perguntas/screens/register_restaurante/steps/step1_conta.dart';
 import 'package:projeto_perguntas/screens/register_restaurante/steps/step2_restaurante.dart';
+import 'package:projeto_perguntas/screens/register_restaurante/steps/step3_responsavel.dart';
 import 'package:projeto_perguntas/screens/register_restaurante/steps/step3_endereco.dart';
+import 'package:projeto_perguntas/screens/register_restaurante/steps/step5_operacional.dart';
 import 'package:projeto_perguntas/screens/widgets/register_progress_bar.dart';
 
 class RegisterRestauranteScreen extends StatefulWidget {
@@ -41,7 +43,7 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
               preferredSize: const Size.fromHeight(4),
               child: RegisterProgressBar(
                 currentPage: _controller.currentPage,
-                totalPages: 3,
+                totalPages: 5,
               ),
             ),
           ),
@@ -52,7 +54,9 @@ class _RegisterRestauranteScreenState extends State<RegisterRestauranteScreen> {
             children: [
               Step1Conta(controller: _controller),
               Step2Restaurante(controller: _controller),
+              Step3Responsavel(controller: _controller),
               Step3Endereco(controller: _controller),
+              Step5Operacional(controller: _controller),
             ],
           ),
         );
